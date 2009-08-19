@@ -34,10 +34,10 @@ start_link(_Args) ->
 %% specifications.
 %%--------------------------------------------------------------------
 init([]) ->
-%    User =  {pit_user_server,{pit_user_server,start_link,[]},
-%		 permanent,2000,worker,[pit_user_server]},
+%    Worker =  {pit_worker,{pit_worker,start_link,[]},
+%		 permanent,2000,worker,[pit_worker]},
 
-    {ok,{{one_for_one,0,1}, [Worker]}}.
+    {ok,{{one_for_one,0,1}, []}}.
 
 %%====================================================================
 %% Internal functions
