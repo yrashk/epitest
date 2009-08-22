@@ -262,6 +262,14 @@ test("Negative split node test") ->
       end}];
 
 
+test("Split node with arguments test") -> 
+    [
+     {nodesplit, [{args,"-kernel testflag yes"}]},
+     {f,
+      fun () ->
+	      {ok, yes} = application:get_env(kernel, testflag)
+      end}];
+
 
 test("All dependants test") ->
     [{r, [?all_dependants("Pass the node",r)]},

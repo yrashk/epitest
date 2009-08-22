@@ -1,10 +1,13 @@
 -module(epitest_slave).
--export([start_link/0]).
+-export([start_link/0, start_link/1]).
 
 get_path() ->
     lists:map(fun filename:absname/1, code:get_path()).    
 
 start_link() ->
+    start_link([]).
+
+start_link(Args) ->
     {ok, Host} = inet:gethostname(),
     {_SNodename, Nodename} = generate_nodename(),
     %{ok, Cwd} = file:get_cwd(),
@@ -12,7 +15,7 @@ start_link() ->
     %NewDir = Cwd ++ "/" ++ Dir ++ "/" ++ SNodename,
     %ok = file:make_dir(NewDir),
     Paths = get_path(),
-    {ok, Node} = slave:start_link(list_to_atom(Host), Nodename, []),
+    {ok, Node} = slave:start_link(list_to_atom(Host), Nodename, Args),
     %ok = rpc:call(Node, file, set_cwd, [NewDir]),
     ok = rpc:call(Node, code, add_paths, [Paths]),
     {ok, Node}.
