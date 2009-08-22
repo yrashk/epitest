@@ -25,21 +25,21 @@ test("Simple test that fails") ->
     [{fmsg, "It should have failed, that's all right"},
      {f,
       fun () ->
-	      5 = apply(fun erlang:'+'/2, [2,2])
+	      throw(ok)
       end}];
 
 test("Another simple test that fails") ->
     [{fmsg, "It should have failed, that's all right"},
      {f,
       fun () ->
-	      5 = apply(fun erlang:'+'/2, [2,2])
+	      throw(ok)
       end}];
 
 test("Another simple test that fails (with State)") ->
     [{fmsg, "It should have failed, that's all right"},
      {f,
       fun (_State) ->
-	      5 = apply(fun erlang:'+'/2, [2,2])
+	      throw(ok)
       end}];
 
 test("Simple negative test") ->
@@ -54,7 +54,7 @@ test("Simple negative test that fails") ->
      negative,
      {f,
       fun () ->
-	      4 = apply(fun erlang:'+'/2, [2,2])
+	      ok
       end}];
 
 test("Simple test with a single r dependency that should never be reached") ->
