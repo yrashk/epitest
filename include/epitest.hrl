@@ -19,13 +19,13 @@
 -define(all_dependants(X,E), {'CORE', "All dependants", [?MODULE, X, E]}).
 
 -define(instantiate(Tuple), 
-	case Tuple of
-	    T when is_list(T) ->
-		{T, [make_ref()]};
-	    {T,A} ->
-		{T, A++[make_ref()]};
-	    {M, T, A} ->
-		{M, T, A ++[make_ref()]}
+	case {{?FILE,?LINE}, Tuple} of
+	    {Instance,T} when is_list(T) ->
+		{T, [Instance]};
+	    {Instance,{T,A}} ->
+		{T, A ++ [Instance]};
+	    {Instance,{M, T, A}} ->
+		{M, T, A ++ [Instance]}
 	end).
 
 -define(instantiable(T), {T, _Instance}).
