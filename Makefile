@@ -15,7 +15,7 @@ selftest: all
 	@erl -noshell -epitest dir \"_tests\" -sname epitest -pa t ebin -s epitest -s epitest modules selftest -s epitest_console_logger -s epitest run 
 
 clean:
-	rm -rf ebin/*.app ebin/*.beam
+	rm -rf ebin/*.app ebin/*.beam t/*.beam
 
 vsn:
 	@echo $(VSN)
