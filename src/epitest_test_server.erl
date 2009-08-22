@@ -12,7 +12,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--record(state, { tests, graph }).
+-record(state, { tests, original_tests, graph }).
 
 -define(SERVER, ?MODULE).
 
@@ -38,7 +38,7 @@ start_link() ->
 %% Description: Initiates the server
 %%--------------------------------------------------------------------
 init([]) ->
-    {ok, #state{ tests = dict:new(), graph = digraph:new([acyclic]) }}.
+    {ok, #state{ tests = dict:new(), original_tests = dict:new(), graph = digraph:new([acyclic]) }}.
 
 %%--------------------------------------------------------------------
 %% Function: %% handle_call(Request, From, State) -> {reply, Reply, State} |
@@ -62,8 +62,11 @@ handle_call({all_dependants, EdgeLabel, Test}, _From, State) ->
     {reply, Desc, State};
 
 handle_call({status, Test}, _From, State) ->
-    {ok, Pid} = dict:find(Test, State#state.tests),
+    {ok, Pid} = dict:find(Test, State#state.original_tests),
     {reply, epitest_worker:status(Pid), State};
+
+handle_call(tests, _From, State) ->
+    {reply, dict:fetch_keys(State#state.original_tests), State};
 
 handle_call(remaining_tests, _From, State) ->
     {reply, dict:fetch_keys(State#state.tests), State};
@@ -88,7 +91,7 @@ handle_cast(run, State) ->
 				{ok, Worker} = supervisor:start_child(epitest_test_sup, [#epistate{test={Mod,T,A}}]),
 				dict:store({Mod,T,A}, Worker, Tests)
 			end, State#state.tests, digraph:vertices(State#state.graph)),
-    {noreply, State#state{tests = Tests}};
+    {noreply, State#state{tests = Tests, original_tests = Tests}};
 
 handle_cast({notify, Tests, Kind, Epistate, Test}, State) ->
     NewTests = dict:erase(Test, State#state.tests),
