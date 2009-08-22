@@ -56,7 +56,16 @@ test("Simple test with a single fr dependency") ->
 
 test("Simple test with a single ir dependency") ->
     [
-     {fr, ["Simple test that fails"]},
+     {ir, ["Simple test that fails"]},
+     {f,
+      fun () ->
+	      ok
+      end}
+    ];
+
+test("Another simple test with a single ir dependency") ->
+    [
+     {ir, ["Simple test with no dependencies, no function"]},
      {f,
       fun () ->
 	      ok
@@ -107,5 +116,14 @@ test("Another simple test with a multiple fr dependency that should never be rea
      {f,
       fun () ->
 	      io:format("[YOU REACHED TEST THAT YOU SHOULDN'T #4]")
+      end}
+    ];
+
+test("Simple test with a multiple ir dependency") ->
+    [
+     {ir, ["Simple test that fails", "Simple test with no dependencies, no function","Simple test with no dependencies"]},
+     {f,
+      fun () ->
+	      ok
       end}
     ].
