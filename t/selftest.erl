@@ -190,7 +190,8 @@ test("Split node test") ->
      {r, ["Pass the node"]},
      {f,
       fun (State) ->
-	      false = node() == ?GET(node, State)
+	      false = node() == ?GET(node, State),
+	      true = proplists:get_value(splitnode, State#epistate.options) == node()
       end}];
 
 test("Negative split node test") -> 
