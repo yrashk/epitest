@@ -306,5 +306,7 @@ test("Repeat while test") -> % TODO: make a better test
 test("Another module's test dependency") ->
     [{r,[{anothertest,"Just some test"}]}];
 test("Another module's test dependency #2") ->
-    [{r,[{anothertest,"Just some test #2", []}]}].
+    [{r,[{anothertest,"Just some test #2", []}]}];
+test("Another module's instantiable dependency") ->
+    [{r, [?instantiate({anothertest, "Instantiable"})]}].
     
