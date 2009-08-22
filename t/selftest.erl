@@ -235,5 +235,33 @@ test("All dependants test") ->
 	      yes = ?GET("Split node split test", State)
 	      % we can't check "Negative split node test" for now, because it is negative
       end
-      }].
+      }];
 
+test("Repeat until test") ->
+    [{repeat, {until, 100}},
+     {f,
+      fun () ->
+	      case get(counter) of
+		  undefined ->
+		      put(counter, 1);
+		  N ->
+		      put(counter, N+1)
+	      end,
+	      get(counter)
+      end}
+     ];
+
+test("Repeat while test") ->
+    [{repeat, {while, 1}},
+     {f,
+      fun () ->
+	      case get(counter) of
+		  undefined ->
+		      put(counter, 1);
+		  N ->
+		      put(counter, N+1)
+	      end,
+	      get(counter)
+      end}
+     ].
+    

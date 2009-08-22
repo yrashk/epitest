@@ -260,17 +260,29 @@ do_run(Pid,Info,State) ->
 		 end,
 	case Result of
 	    {badrpc, {'EXIT', Err}} ->
-		report_result(Pid, Err, N);
+		report_result(Pid, Info, State, Err, N);
 	    _ ->
-		report_result(Pid, Result, true and not N)
+		report_result(Pid, Info, State, Result, true and not N)
 	end
     catch K:V ->
-	    report_result(Pid, {K,V}, N)
+	    report_result(Pid, Info, State, {K,V}, N)
     end.
 
-report_result(Pid, Result, true) ->
-    gen_fsm:send_event(Pid, {success, Result});
-report_result(Pid, Result, false) ->
+report_result(Pid, Info, State, Result, true) ->
+    Repeat = proplists:get_value(repeat, Info),
+    case Repeat of
+	{until, Result} ->
+	    gen_fsm:send_event(Pid, {success, Result});
+	{until, _} ->
+	    do_run(Pid, Info, State);
+	{while, Result} ->
+	    do_run(Pid, Info, State);
+	{while, _} ->
+	    gen_fsm:send_event(Pid, {success, Result});
+	_ ->
+	    gen_fsm:send_event(Pid, {success, Result})
+    end;
+report_result(Pid, _, _, Result, false) ->
     gen_fsm:send_event(Pid, {failure, Result}).
 
 
