@@ -35,6 +35,21 @@ test("Another simple test that fails") ->
 	      5 = apply(fun erlang:'+'/2, [2,2])
       end}];
 
+test("Simple negative test") ->
+    [negative,
+     {f,
+      fun () ->
+	      5 = apply(fun erlang:'+'/2, [2,2])
+      end}];
+
+test("Simple negative test that fails") ->
+    [negative,
+     {f,
+      fun () ->
+	      io:format("[next failure is ok]"),
+	      4 = apply(fun erlang:'+'/2, [2,2])
+      end}];
+
 test("Simple test with a single r dependency that should never be reached") ->
     [
      {r, ["Simple test that fails"]},

@@ -216,12 +216,18 @@ do_run(Pid,State) ->
 	    Info = apply(Mod, test, [list_to_tuple([Name|Args])])
     end,
     F = proplists:get_value(f, Info, fun () -> skip end),
+    N = proplists:get_value(negative, Info, false),
     try
 	apply(F,[]),
-	io:format("."),
-	gen_fsm:send_event(Pid, success)
+	report_result(Pid, true and not N)
     catch _:_ ->
-	io:format("F"),
-	gen_fsm:send_event(Pid, failure)
+	report_result(Pid, N)
     end.
+
+report_result(Pid, true) ->
+    io:format("."),
+    gen_fsm:send_event(Pid, success);
+report_result(Pid, false) ->
+    io:format("F"),
+    gen_fsm:send_event(Pid, failure).
 
