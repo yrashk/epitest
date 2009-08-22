@@ -179,7 +179,7 @@ test("Alter the variable") ->
     [
      {r, ["Pass the variable"]},
      {f,
-      fun (State) ->
+      fun () ->
 	       ?PASS([{var, "val1"}])
       end}
      ];
@@ -193,7 +193,7 @@ test("Check the variable after alteration") ->
       end}
      ];
 
-test(?instantiable("Parametrized node")) ->
+test(?instantiable("Parametrized test")) ->
     [
      {f,
       fun () ->
@@ -201,11 +201,11 @@ test(?instantiable("Parametrized node")) ->
       end}
      ];
 
-test("Parametrized node requirement test") ->
+test("Parametrized test requirement test") ->
     [
-     {r, [?instantiate("Parametrized node")]},
+     {r, [?instantiate("Parametrized test")]},
      {f,
-      fun (State) ->
+      fun () ->
 	      ok
       end}
      ];
