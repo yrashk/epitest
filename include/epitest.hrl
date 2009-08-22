@@ -10,6 +10,7 @@
 -record(epistate,
 	{
 	  test,
+	  options = [],
 	  variables = []
 	 }).
 

@@ -11,7 +11,8 @@ compile:
 	@erl -pa ebin -noshell -eval "make:all($(MAKEARG))" -s erlang halt
 
 selftest: compile
-	@erl -noshell -pa t ebin -s epitest -eval "epitest:add_module(selftest)" -s epitest run 
+	@mkdir -p _tests
+	@erl -noshell -epitest dir \"_tests\" -sname epitest -pa t ebin -s epitest -eval "epitest:add_module(selftest)" -s epitest run 
 
 clean:
 	rm -rf ebin/*.app ebin/*.beam

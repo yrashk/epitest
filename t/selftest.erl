@@ -141,4 +141,12 @@ test("Simple test with a multiple ir dependency") ->
       fun () ->
 	      ok
       end}
-    ].
+    ];
+
+test("Split node test") ->
+    [
+     nodesplit,
+     {f,
+      fun () ->
+	      io:format("Nodesplit: ~p~n",[node()])
+      end}].

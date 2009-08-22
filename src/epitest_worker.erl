@@ -82,6 +82,11 @@ ready(run, State) ->
     spawn(fun () -> do_run(Pid, State) end),
     {next_state, running, State}.
 
+running({set_option, Key, Val}, State) ->
+    Epistate0 = State#state.epistate,
+    Epistate = Epistate0#epistate { options = lists:keystore(Key, 1, Epistate0#epistate.options, proplists:property(Key, Val)) },
+    {next_state, running, State#state{epistate=Epistate}};
+
 running(success, State) ->
     NotificationList = lists:flatten([epitest:dependants((State#state.epistate)#epistate.test, Label) || Label <- [r,ir]]),
     gen_server:cast(epitest_test_server, {notify, NotificationList, passed, (State#state.epistate)#epistate.test}),
@@ -217,11 +222,19 @@ do_run(Pid,State) ->
     end,
     F = proplists:get_value(f, Info, fun () -> skip end),
     N = proplists:get_value(negative, Info, false),
+    Nodesplit = proplists:get_value(nodesplit, Info, false),
     try
-	apply(F,[]),
+	case Nodesplit of
+	    true ->
+		{ok, Node} = epitest_slave:start(),
+		gen_fsm:send_event(Pid, {set_option, splitnode, Node}),
+		rpc:call(Node, erlang, apply, [F,[]]);
+	    _ ->
+		apply(F,[])
+	end,
 	report_result(Pid, true and not N)
     catch _:_ ->
-	report_result(Pid, N)
+	    report_result(Pid, N)
     end.
 
 report_result(Pid, true) ->
