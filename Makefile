@@ -12,7 +12,7 @@ compile:
 
 selftest: compile
 	@mkdir -p _tests
-	@erl -noshell -epitest dir \"_tests\" -sname epitest -pa t ebin -s epitest -eval "epitest:add_module(selftest)" -s epitest_plain_logger -s epitest run 
+	@erl -noshell -epitest dir \"_tests\" -sname epitest -pa t ebin -s epitest -s epitest modules selftest -s epitest_plain_logger -s epitest run 
 
 clean:
 	rm -rf ebin/*.app ebin/*.beam
