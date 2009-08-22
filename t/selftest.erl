@@ -175,6 +175,24 @@ test("Check the variable") ->
       end}
      ];
 
+test("Alter the variable") ->
+    [
+     {r, ["Pass the variable"]},
+     {f,
+      fun (State) ->
+	       ?PASS([{var, "val1"}])
+      end}
+     ];
+
+test("Check the variable after alteration") ->
+    [
+     {r, ["Alter the variable"]},
+     {f,
+      fun (State) ->
+	      "val1" = ?GET(var, State)
+      end}
+     ];
+
 test("Pass the node") ->
     [
      {f,
