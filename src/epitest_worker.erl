@@ -215,17 +215,25 @@ code_change(_OldVsn, StateName, State, _Extra) ->
 %%% Internal functions
 %%--------------------------------------------------------------------
 do_run(Pid,Info,State) ->
+    Epistate = (State#state.epistate),
+    Opts = Epistate#epistate.options,
     F = proplists:get_value(f, Info, fun () -> skip end),
+    Args = if 
+	       is_function(F,0) ->
+		   [];
+	       is_function(F, 1) ->
+		   [Epistate];
+	       true ->
+		   throw("'f' fun can be either /0 or /1")
+	   end,
     N = proplists:get_value(negative, Info, false),
     Nodesplit = proplists:get_value(nodesplit, Info, false),
     try
 	case Nodesplit of
 	    true ->
-		Epistate = (State#state.epistate),
-		Opts = Epistate#epistate.options,
-		rpc:call(proplists:get_value(splitnode, Opts), erlang, apply, [F,[]]);
+		rpc:call(proplists:get_value(splitnode, Opts), erlang, apply, [F,Args]);
 	    _ ->
-		apply(F,[])
+		apply(F,Args)
 	end,
 	report_result(Pid, true and not N)
     catch _:_ ->

@@ -143,6 +143,14 @@ test("Simple test with a multiple ir dependency") ->
       end}
     ];
 
+test("f/1") ->
+    [
+     {f,
+      fun (S) ->
+	      true = is_record(S, epistate)
+      end}
+     ];
+
 test("Split node test") ->
     [
      nodesplit,
