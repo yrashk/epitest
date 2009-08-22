@@ -103,10 +103,12 @@ running({success, _}, State) ->
     gen_fsm:send_event(self(), {success, []}),
     {next_state, running, State};
 
-running(failure, State) ->
+running({failure, Result}, State) ->
+    Epistate0 = (State#state.epistate),
+    Epistate = Epistate0#epistate{ failure = Result },
     NotificationList = lists:flatten([epitest:dependants((State#state.epistate)#epistate.test, Label) || Label <- [ir,fr]]),
     gen_server:cast(epitest_test_server, {notify, NotificationList, failed, [], (State#state.epistate)#epistate.test}),
-    {next_state, failed, State}.
+    {next_state, failed, State#state{epistate=Epistate}}.
 
 waiting({notification, passed, Vars, Test}, #state{waiting_ir=[Test], waiting_r=[Test], waiting_fr=[]}=State) ->
     Epistate = merge_vars(State, Vars),
@@ -247,21 +249,21 @@ do_run(Pid,Info,State) ->
 			 apply(F,Args)
 		 end,
 	case Result of
-	    {badrpc, {'EXIT', {_,_}}} ->
-		report_result(Pid, undefined, N);
+	    {badrpc, {'EXIT', Err}} ->
+		report_result(Pid, Err, N);
 	    _ ->
 		report_result(Pid, Result, true and not N)
 	end
-    catch _:_ ->
-	    report_result(Pid, undefined, N)
+    catch K:V ->
+	    report_result(Pid, {K,V}, N)
     end.
 
 report_result(Pid, Result, true) ->
     io:format("."),
     gen_fsm:send_event(Pid, {success, Result});
-report_result(Pid, _Result, false) ->
+report_result(Pid, Result, false) ->
     io:format("F"),
-    gen_fsm:send_event(Pid, failure).
+    gen_fsm:send_event(Pid, {failure, Result}).
 
 
 get_info(State) ->

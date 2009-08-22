@@ -11,7 +11,8 @@
 	{
 	  test,
 	  options = [],
-	  variables = []
+	  variables = [],
+	  failure
 	 }).
 
 
