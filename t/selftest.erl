@@ -237,7 +237,7 @@ test("All dependants test") ->
       end
       }];
 
-test("Repeat until test") ->
+test("Repeat until test") -> % TODO: make a better test
     [{repeat, {until, 100}},
      {f,
       fun () ->
@@ -251,7 +251,7 @@ test("Repeat until test") ->
       end}
      ];
 
-test("Repeat while test") ->
+test("Repeat while test") -> % TODO: make a better test
     [{repeat, {while, 1}},
      {f,
       fun () ->
