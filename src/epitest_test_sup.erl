@@ -1,10 +1,9 @@
--module(epitest_sup).
--vsn(?vsn).
+-module(epitest_test_sup).
 
 -behaviour(supervisor).
 
 %% API
--export([start_link/1]).
+-export([start_link/0]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -18,7 +17,7 @@
 %% Function: start_link() -> {ok,Pid} | ignore | {error,Error}
 %% Description: Starts the supervisor
 %%--------------------------------------------------------------------
-start_link(_Args) ->
+start_link() ->
     supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
 %%====================================================================
@@ -34,11 +33,9 @@ start_link(_Args) ->
 %% specifications.
 %%--------------------------------------------------------------------
 init([]) ->
-    TestServer = {epitest_test_server, {epitest_test_server, start_link, []},
-		  permanent,2000,worker,[epitest_test_server]},
-    TestSup = {epitest_test_sup,  {epitest_test_sup, start_link, []},
-		  permanent,infinity,supervisor,[epitest_test_sup]},
-    {ok,{{one_for_one,0,1}, [TestServer, TestSup]}}.
+    AChild = {epitest_worker,{epitest_worker,start_link,[]},
+	      temporary,2000,worker,[epitest_worker]},
+    {ok,{{simple_one_for_one,0,1}, [AChild]}}.
 
 %%====================================================================
 %% Internal functions
