@@ -79,13 +79,18 @@ initialized(start, State) ->
 
 ready(run, State) ->
     Pid = self(),
-    spawn(fun () -> do_run(Pid, State) end),
-    {next_state, running, State}.
-
-running({set_option, Key, Val}, State) ->
-    Epistate0 = State#state.epistate,
-    Epistate = Epistate0#epistate { options = lists:keystore(Key, 1, Epistate0#epistate.options, proplists:property(Key, Val)) },
-    {next_state, running, State#state{epistate=Epistate}};
+    Epistate0 = (State#state.epistate),
+    Info = get_info(State),
+    Nodesplit = proplists:get_value(nodesplit, Info, false),
+    State1 = case Nodesplit of
+		 true ->
+		     {ok, Node} = epitest_slave:start_link(),
+		     State#state{ epistate = Epistate0#epistate{ options = lists:keystore(splitnode, 1, Epistate0#epistate.options, proplists:property(splitnode, Node))}};
+		 false ->
+		     State
+	     end,
+    spawn(fun () -> do_run(Pid,Info, State1) end),
+    {next_state, running, State1}.
 
 running(success, State) ->
     NotificationList = lists:flatten([epitest:dependants((State#state.epistate)#epistate.test, Label) || Label <- [r,ir]]),
@@ -209,26 +214,16 @@ code_change(_OldVsn, StateName, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-do_run(Pid,State) ->
-    Test = (State#state.epistate)#epistate.test,
-    {Mod, Name, Args} = Test,
-    case Test of
-	{'CORE', "All dependants", [M,T,E]} ->
-	    Info = [{r, [{M,T,E}]}];
-	{_,_,_} ->
-	    Info = apply(Mod, test, [Name]);
-	_ ->
-	    Info = apply(Mod, test, [list_to_tuple([Name|Args])])
-    end,
+do_run(Pid,Info,State) ->
     F = proplists:get_value(f, Info, fun () -> skip end),
     N = proplists:get_value(negative, Info, false),
     Nodesplit = proplists:get_value(nodesplit, Info, false),
     try
 	case Nodesplit of
 	    true ->
-		{ok, Node} = epitest_slave:start(),
-		gen_fsm:send_event(Pid, {set_option, splitnode, Node}),
-		rpc:call(Node, erlang, apply, [F,[]]);
+		Epistate = (State#state.epistate),
+		Opts = Epistate#epistate.options,
+		rpc:call(proplists:get_value(splitnode, Opts), erlang, apply, [F,[]]);
 	    _ ->
 		apply(F,[])
 	end,
@@ -243,4 +238,18 @@ report_result(Pid, true) ->
 report_result(Pid, false) ->
     io:format("F"),
     gen_fsm:send_event(Pid, failure).
+
+
+get_info(State) ->
+    Epistate = State#state.epistate,
+    Test = Epistate#epistate.test,
+    {Mod, Name, Args} = Test,
+    case Test of
+	{'CORE', "All dependants", [M,T,E]} ->
+	    [{r, [{M,T,E}]}];
+	{_,_,_} ->
+	    apply(Mod, test, [Name]);
+	_ ->
+	    apply(Mod, test, [list_to_tuple([Name|Args])])
+    end.
 

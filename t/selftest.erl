@@ -148,5 +148,5 @@ test("Split node test") ->
      nodesplit,
      {f,
       fun () ->
-	      io:format("Nodesplit: ~p~n",[node()])
+	      io:format("[Nodesplit: ~p]",[node()])
       end}].
