@@ -35,6 +35,13 @@ test("Another simple test that fails") ->
 	      5 = apply(fun erlang:'+'/2, [2,2])
       end}];
 
+test("Another simple test that fails (with State)") ->
+    [{f,
+      fun (_State) ->
+	      io:format("[next failure is ok]"),
+	      5 = apply(fun erlang:'+'/2, [2,2])
+      end}];
+
 test("Simple negative test") ->
     [negative,
      {f,
@@ -151,10 +158,37 @@ test("f/1") ->
       end}
      ];
 
-test("Split node test") ->
+
+test("Pass the variable") ->
     [
-     nodesplit,
      {f,
       fun () ->
-	      io:format("[Nodesplit: ~p]",[node()])
+	      ?PASS([{var, "val"}])
+      end}
+     ];
+
+test("Check the variable") ->
+    [
+     {r, ["Pass the variable"]},
+     {f,
+      fun (State) ->
+	      "val" = ?GET(var, State)
+      end}
+     ];
+
+test("Pass the node") ->
+    [
+     {f,
+      fun () ->
+	      ?PASS([{node,node()}])
+      end}
+     ];
+      
+test("Split node test") -> 
+    [
+     nodesplit,
+     {r, ["Pass the node"]},
+     {f,
+      fun (State) ->
+	      false = node() == ?GET(node, State)
       end}].

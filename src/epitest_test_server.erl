@@ -85,11 +85,11 @@ handle_cast(run, State) ->
 			end, State#state.tests, digraph:vertices(State#state.graph)),
     {noreply, State#state{tests = Tests}};
 
-handle_cast({notify, Tests, Kind, Test}, State) ->
+handle_cast({notify, Tests, Kind, Vars, Test}, State) ->
     lists:foreach(fun (T) ->
 			  case dict:find(T, State#state.tests) of
 			      {ok, TestPid} ->
-				  gen_fsm:send_event(TestPid, {notification, Kind, Test});
+				  gen_fsm:send_event(TestPid, {notification, Kind, Vars, Test});
 			      _ ->
 				  skip
 			  end
