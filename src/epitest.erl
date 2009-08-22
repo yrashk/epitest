@@ -3,7 +3,7 @@
 
 -export([start/0,stop/0]).
 
--export([run/0,dependants/2, requires/2, all_dependants/1, all_dependants/2, add_module/1, modules/1, status/1, remaining_tests/0, tests/0]).
+-export([run/0, dependants/1, dependants/2, requires/1, requires/2, all_dependants/1, all_dependants/2, add_module/1, modules/1, status/1, remaining_tests/0, tests/0]).
 
 
 start() ->
@@ -20,9 +20,13 @@ stop() ->
 run() ->
     gen_server:cast(epitest_test_server, run).
 
+dependants(Test) ->
+    dependants(Test, '_').
 dependants(Test, Label) ->
     gen_server:call(epitest_test_server, {dependants, Label, Test}).
 
+requires(Test) ->
+    requires(Test, '_').
 requires(Test, Label) ->
     gen_server:call(epitest_test_server, {requires, Label, Test}).
 

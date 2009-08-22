@@ -178,14 +178,7 @@ add_edges(D, Mod, Edge) ->
 do_requires(EdgeLabel,{'CORE',"All dependants",[Mod0,Name0,_Edge0]}=F, State) ->
     lists:filter(fun (X) -> X =/= F end, lists:usort(do_all_dependants(EdgeLabel, {Mod0, Name0, []}, State) -- do_dependants(EdgeLabel,F,State, skip))); % FIXME: it is weeeeird, why we should do this -- ?
 do_requires(EdgeLabel, Test, State) ->
-    ReqEdges = lists:filter(fun (E) ->
-				    case digraph:edge(State#state.graph, E) of
-					{_,_,_, EdgeLabel} ->
-					    true;
-					_ ->
-					    false
-				    end
-			    end, digraph:out_edges(State#state.graph, Test)),
+    ReqEdges = lists:filter(fun (E) -> filter_dependants(E, EdgeLabel, State) end, digraph:out_edges(State#state.graph, Test)),
     lists:map(fun (E) -> {_,_,D,_} = digraph:edge(State#state.graph, E), D end, ReqEdges).
 
 do_dependants(EdgeLabel, Test, State, skip) ->
