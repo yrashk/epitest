@@ -1,5 +1,8 @@
 -module(epitest_dot_logger).
 
+-define(EPITEST_NOTRANSFORM, true).
+-include_lib("epitest/include/epitest.hrl").
+
 -behaviour(gen_event).
 %% API
 -export([start/0, start_link/0, add_handler/0]).
