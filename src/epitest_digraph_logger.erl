@@ -57,7 +57,7 @@ handle_event({_, #epistate{test = {'CORE',_,_}}}, State) ->
     {ok, State}; % skip core tests
 handle_event({success, Epistate}, State) ->
     {M,T,A} = Epistate#epistate.test,
-    Test = "\"" ++ escape(io_lib:format("~w:~s(~p)",[M,T,A])) ++ "\"",
+    Test = "\"" ++ escape(io_lib:format("~w:~s(~w)",[M,T,A])) ++ "\"",
     Deps = lists:map(fun (D) ->
 			     {M1,T1,A1} = D,
 			     Test1 = "\"" ++ escape(io_lib:format("~w:~s(~w)",[M1,T1,A1])) ++ "\"",
@@ -72,7 +72,7 @@ handle_event({success, Epistate}, State) ->
     {ok, State#state{ digraph = State#state.digraph ++ Portion}};
 handle_event({failure, Epistate}, State) ->
     {M,T,A} = Epistate#epistate.test,
-    Test = "\"" ++ escape(io_lib:format("~w:~s(~p)",[M,T,A])) ++ "\"",
+    Test = "\"" ++ escape(io_lib:format("~w:~s(~w)",[M,T,A])) ++ "\"",
     Deps = lists:map(fun (D) ->
 			     {M1,T1,A1} = D,
 			     Test1 = "\"" ++ escape(io_lib:format("~w:~s(~w)",[M1,T1,A1])) ++ "\"",
