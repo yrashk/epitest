@@ -7,13 +7,13 @@ get_path() ->
 start_link() ->
     {ok, Host} = inet:gethostname(),
     {SNodename, Nodename} = generate_nodename(),
-    {ok, Cwd} = file:get_cwd(),
-    Dir = proplists:get_value(dir, application:get_all_env(epitest), "."),
-    NewDir = Cwd ++ "/" ++ Dir ++ "/" ++ SNodename,
-    ok = file:make_dir(NewDir),
+    %{ok, Cwd} = file:get_cwd(),
+    %Dir = proplists:get_value(dir, application:get_all_env(epitest), "."),
+    %NewDir = Cwd ++ "/" ++ Dir ++ "/" ++ SNodename,
+    %ok = file:make_dir(NewDir),
     Paths = get_path(),
     {ok, Node} = slave:start_link(list_to_atom(Host), Nodename, []),
-    ok = rpc:call(Node, file, set_cwd, [NewDir]),
+    %ok = rpc:call(Node, file, set_cwd, [NewDir]),
     ok = rpc:call(Node, code, add_paths, [Paths]),
     {ok, Node}.
 
