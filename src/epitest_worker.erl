@@ -94,10 +94,9 @@ ready(run, State) ->
 
 running({success, {epitest_variables, Vars}}, State) ->
     Epistate = merge_vars(State, Vars),
-    #epistate{ variables = NewVars } = Epistate,
     gen_event:notify(epitest_log, {success, Epistate}),
     NotificationList = lists:flatten([epitest:dependants((State#state.epistate)#epistate.test, Label) || Label <- [r,ir]]),
-    gen_server:cast(epitest_test_server, {notify, NotificationList, passed, NewVars, (State#state.epistate)#epistate.test}),
+    gen_server:cast(epitest_test_server, {notify, NotificationList, passed, Epistate, (State#state.epistate)#epistate.test}),
     {next_state, passed, State#state{ epistate = Epistate}};
 
 running({success, _}, State) ->
@@ -110,38 +109,42 @@ running({failure, Result}, State) ->
     Epistate = Epistate0#epistate{ failure = {proplists:get_value(fmsg, Info, "Exception caught"), Result} },
     gen_event:notify(epitest_log, {failure, Epistate}),
     NotificationList = lists:flatten([epitest:dependants((State#state.epistate)#epistate.test, Label) || Label <- [ir,fr]]),
-    gen_server:cast(epitest_test_server, {notify, NotificationList, failed, [], (State#state.epistate)#epistate.test}),
+    gen_server:cast(epitest_test_server, {notify, NotificationList, failed, Epistate, (State#state.epistate)#epistate.test}),
     {next_state, failed, State#state{epistate=Epistate}}.
 
-waiting({notification, passed, Vars, Test}, #state{waiting_ir=[Test], waiting_r=[Test], waiting_fr=[]}=State) ->
-    Epistate = merge_vars(State, Vars),
+waiting({notification, passed, Epistate0, Test}, #state{waiting_ir=[Test], waiting_r=[Test], waiting_fr=[]}=State) ->
+    Epistate = merge(State, Epistate0),
     gen_fsm:send_event(self(), run),
     {next_state, ready, #state{epistate=Epistate}};
-waiting({notification, passed, Vars, Test}, #state{waiting_ir=[Test], waiting_r=[], waiting_fr=[]}=State) ->
-    Epistate = merge_vars(State, Vars),
+waiting({notification, passed, Epistate0, Test}, #state{waiting_ir=[Test], waiting_r=[], waiting_fr=[]}=State) ->
+    Epistate = merge(State, Epistate0),
     gen_fsm:send_event(self(), run),
     {next_state, ready, #state{epistate=Epistate}};
-waiting({notification, passed, Vars, Test}, #state{waiting_ir=[],waiting_r=[Test], waiting_fr=[]}=State) ->
-    Epistate = merge_vars(State, Vars),
+waiting({notification, passed, Epistate0, Test}, #state{waiting_ir=[],waiting_r=[Test], waiting_fr=[]}=State) ->
+    Epistate = merge(State, Epistate0),
     gen_fsm:send_event(self(), run),
     {next_state, ready, #state{epistate=Epistate}};
 
-waiting({notification, passed, Vars, Test}, #state{}=State) ->
-    Epistate = merge_vars(State, Vars),
+waiting({notification, passed, Epistate0, Test}, #state{}=State) ->
+    Epistate = merge(State, Epistate0),
     {next_state, waiting, State#state{epistate=Epistate, waiting_ir=State#state.waiting_ir -- [Test], waiting_r=State#state.waiting_r -- [Test]}};
 
-waiting({notification, failed, _, Test}, #state{waiting_ir=[Test], waiting_fr=[Test], waiting_r=[]}=State) ->
+waiting({notification, failed, Epistate0, Test}, #state{waiting_ir=[Test], waiting_fr=[Test], waiting_r=[]}=State) ->
+    Epistate = merge(State, Epistate0),
     gen_fsm:send_event(self(), run),
-    {next_state, ready, #state{epistate=State#state.epistate}};
-waiting({notification, failed, _, Test}, #state{waiting_ir=[Test], waiting_fr=[], waiting_r=[]}=State) ->
+    {next_state, ready, #state{epistate=Epistate}};
+waiting({notification, failed, Epistate0, Test}, #state{waiting_ir=[Test], waiting_fr=[], waiting_r=[]}=State) ->
+    Epistate = merge(State, Epistate0),
     gen_fsm:send_event(self(), run),
-    {next_state, ready, #state{epistate=State#state.epistate}};
-waiting({notification, failed, _, Test}, #state{waiting_ir=[],waiting_fr=[Test], waiting_r=[]}=State) ->
+    {next_state, ready, #state{epistate=Epistate}};
+waiting({notification, failed, Epistate0, Test}, #state{waiting_ir=[],waiting_fr=[Test], waiting_r=[]}=State) ->
+    Epistate = merge(State, Epistate0),
     gen_fsm:send_event(self(), run),
-    {next_state, ready, #state{epistate=State#state.epistate}};
+    {next_state, ready, #state{epistate=Epistate}};
 
-waiting({notification, failed, _, Test}, #state{}=State) ->
-    {next_state, waiting, State#state{waiting_ir=State#state.waiting_ir -- [Test], waiting_fr=State#state.waiting_fr -- [Test]}}.
+waiting({notification, failed, Epistate0, Test}, #state{}=State) ->
+    Epistate = merge(State, Epistate0),
+    {next_state, waiting, State#state{epistate = Epistate, waiting_ir=State#state.waiting_ir -- [Test], waiting_fr=State#state.waiting_fr -- [Test]}}.
 
 
 %%--------------------------------------------------------------------
@@ -243,7 +246,7 @@ do_run(Pid,Info,State) ->
 		   throw("'f' fun can be either /0 or /1")
 	   end,
     N = proplists:get_value(negative, Info, false),
-    Nodesplit = proplists:get_value(nodesplit, Info, false),
+    Nodesplit = proplists:get_value(splitnode, Opts) =/= undefined,
     try
 	Result = case Nodesplit of
 		     true ->
@@ -285,3 +288,9 @@ merge_vars(State, Vars) ->
     Epistate0 = (State#state.epistate),
     NewVars = lists:keymerge(1,Epistate0#epistate.variables, Vars),
     Epistate0#epistate{ variables = NewVars }.
+
+merge(State, Epistate1) ->
+    Epistate0 = (State#state.epistate),
+    NewOpts = lists:keymerge(1,Epistate0#epistate.options, Epistate1#epistate.options),
+    NewVars = lists:keymerge(1,Epistate0#epistate.variables, Epistate1#epistate.variables),
+    Epistate0#epistate{ options = NewOpts, variables = NewVars }.
