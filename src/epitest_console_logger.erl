@@ -57,7 +57,7 @@ handle_event({_, #epistate{test = {'CORE',_,_}}}, State) ->
     {ok, State}; % skip core tests
 handle_event({success, Epistate}, State) ->
     {M,T,A} = Epistate#epistate.test,
-    io:format("\e[32m[PASSED] ~p:~p(~p)\e[0m~n", [M,T,A]),
+    io:format("\e[32m[PASSED] ~p:'~s'(~p)\e[0m~n", [M,T,A]),
     {ok, State};
 handle_event({failure, Epistate}, State) ->
     {M,T,A} = Epistate#epistate.test,
