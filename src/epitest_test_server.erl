@@ -86,6 +86,8 @@ handle_cast(run, State) ->
     {noreply, State#state{tests = Tests}};
 
 handle_cast({notify, Tests, Kind, Epistate, Test}, State) ->
+    NewTests = dict:erase(Test, State#state.tests),
+    spawn(fun () -> wipeout_unreachables(Kind, NewTests, Test) end),
     lists:foreach(fun (T) ->
 			  case dict:find(T, State#state.tests) of
 			      {ok, TestPid} ->
@@ -94,7 +96,13 @@ handle_cast({notify, Tests, Kind, Epistate, Test}, State) ->
 				  skip
 			  end
 		  end, Tests),
-    {noreply, State};
+    do_check_tests_presence(NewTests),
+    {noreply, State#state{tests = NewTests}};
+
+handle_cast({wipeout, Tests}, State) ->
+    NewTests = lists:foldl(fun (X,D) -> dict:erase(X,D) end, State#state.tests, Tests),
+    do_check_tests_presence(State#state.tests),
+    {noreply, State#state{ tests = NewTests} };
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
@@ -185,3 +193,15 @@ filter_dependants(E, EdgeLabel,State) ->
 	    false
     end.
     
+wipeout_unreachables(failed, Tests, Test) ->
+    gen_server:cast(epitest_test_server, {wipeout, epitest:dependants(Test, r)});
+wipeout_unreachables(passed, Tests, Test) ->
+    gen_server:cast(epitest_test_server, {wipeout, epitest:dependants(Test, fr)}).
+
+do_check_tests_presence(Tests) ->
+    DictSize = dict:size(Tests),
+    if DictSize == 0 ->
+	    gen_event:notify(epitest_log, finished);
+       true ->
+	    skip
+    end.

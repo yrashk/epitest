@@ -60,6 +60,9 @@ handle_event({failure, Epistate}, State) ->
     {M,T,A} = Epistate#epistate.test,
     io:format("[FAILED] ~p:'~s'(~p): ~p~n", [M,T,A,Epistate#epistate.failure]),
     {ok, State};
+handle_event(finished, State) ->
+    erlang:halt(),
+    {ok, State};
 handle_event(_Event, State) ->
     {ok, State}.
 

@@ -54,6 +54,9 @@ handle_event({success, Epistate}, State) ->
 handle_event({failure, Epistate}, State) ->
     io:format("F"),
     {ok, State};
+handle_event(finished, State) ->
+    erlang:halt(),
+    {ok, State};
 handle_event(_Event, State) ->
     {ok, State}.
 
