@@ -141,24 +141,6 @@ add_dep(D,{Mod1, Dep, Args}, Mod, Name, Edge) when is_list(Dep) ->
     digraph:add_vertex(D, {Mod1, Dep, Args}),
     digraph:add_edge(D, {Mod, Name,[]}, {Mod1, Dep, Args}, Edge).
 
-%% add_edge({0,{"All dependants",'Mod','Name','Edge'}=Name0}, D, epitest_util_tests=Mod, Edge)  ->
-%%     AllArgs = lists:filter(fun (X) -> X =/= undefined end,
-%% 			   lists:map(fun (E) ->
-%% 					     io:format("E:~p~n",[digraph:edge(D,E)]),
-%% 					     case digraph:edge(D,E) of 
-%% 						 {_,_,{Mod, "All dependants", Args},_} ->
-%% 						     Args;
-%% 						 _ ->
-%% 						     undefined
-%% 					     end
-%% 				     end, digraph:edges(D))),
-%%     io:format("~p",[AllArgs]),
-%%     lists:foreach(fun (Args) ->
-%% 			  Info = apply(Mod, test, [list_to_tuple(["All dependants"|Args])]),
-%% 			  io:format("~p",[Info]),
-%% 			  Deps = proplists:get_value(Edge, Info, []),
-%% 			  lists:foreach(fun(Dep) -> add_dep(D,Dep, Mod, Name0, Edge) end, Deps)
-%% 		  end, AllArgs);
 add_edge({_, Name}, D, Mod, Edge) when is_list(Name) ->
     Info = apply(Mod, test, [Name]),
     Deps = proplists:get_value(Edge, Info, []),
