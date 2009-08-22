@@ -191,4 +191,14 @@ test("Split node test") ->
      {f,
       fun (State) ->
 	      false = node() == ?GET(node, State)
+      end}];
+
+test("Negative split node test") -> 
+    [
+     negative,
+     nodesplit,
+     {r, ["Pass the node"]},
+     {f,
+      fun (State) ->
+	      true = node() == ?GET(node, State)
       end}].

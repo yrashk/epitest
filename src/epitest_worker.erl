@@ -246,7 +246,12 @@ do_run(Pid,Info,State) ->
 		     _ ->
 			 apply(F,Args)
 		 end,
-	report_result(Pid, Result, true and not N)
+	case Result of
+	    {badrpc, {'EXIT', {_,_}}} ->
+		report_result(Pid, undefined, N);
+	    _ ->
+		report_result(Pid, Result, true and not N)
+	end
     catch _:_ ->
 	    report_result(Pid, undefined, N)
     end.
