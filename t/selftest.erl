@@ -62,8 +62,7 @@ test("Simple test with a single r dependency that should never be reached") ->
      {r, ["Simple test that fails"]},
      {f,
       fun () ->
-	      io:format("[YOU REACHED TEST THAT YOU SHOULDN'T #1]"),
-	      ok
+	     throw("it shouldn't have been reached")
       end}
     ];
 
@@ -108,7 +107,7 @@ test("Simple test with a multiple r dependency that should never be reached") ->
      {r, ["Simple test that fails","Simple test with no dependencies"]},
      {f,
       fun () ->
-	      io:format("[YOU REACHED TEST THAT YOU SHOULDN'T #3]")
+	     throw("it shouldn't have been reached")
       end}
     ];
 
@@ -127,7 +126,7 @@ test("Simple test with a multiple fr dependency that should never be reached") -
      {fr, ["Simple test that fails","Simple test with no dependencies"]},
      {f,
       fun () ->
-	      io:format("[YOU REACHED TEST THAT YOU SHOULDN'T #3]")
+	     throw("it shouldn't have been reached")
       end}
     ];
 
@@ -137,7 +136,7 @@ test("Another simple test with a multiple fr dependency that should never be rea
      {fr, ["Simple test with no dependencies, no function","Simple test with no dependencies"]},
      {f,
       fun () ->
-	      io:format("[YOU REACHED TEST THAT YOU SHOULDN'T #4]")
+	     throw("it shouldn't have been reached")
       end}
     ];
 
