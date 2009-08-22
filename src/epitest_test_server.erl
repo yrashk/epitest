@@ -61,6 +61,13 @@ handle_call({all_dependants, EdgeLabel, Test}, _From, State) ->
     Desc = do_all_dependants(EdgeLabel, Test, State),
     {reply, Desc, State};
 
+handle_call({status, Test}, _From, State) ->
+    {ok, Pid} = dict:find(Test, State#state.tests),
+    {reply, epitest_worker:status(Pid), State};
+
+handle_call(remaining_tests, _From, State) ->
+    {reply, dict:fetch_keys(State#state.tests), State};
+
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
@@ -137,10 +144,10 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%--------------------------------------------------------------------
 add_dep(D,Dep, Mod, Name, Edge) when is_list(Dep) ->
-     digraph:add_edge(D, {Mod, Name,[]}, {Mod, Dep,[]}, Edge);
+    digraph:add_edge(D, {Mod, Name,[]}, {Mod, Dep,[]}, Edge);
 add_dep(D,{Mod1, Dep}, Mod, Name, Edge) when is_list(Dep) ->
     digraph:add_vertex(D, {Mod1, Dep, []}),
-     digraph:add_edge(D, {Mod, Name,[]}, {Mod1, Dep,[]}, Edge);
+    digraph:add_edge(D, {Mod, Name,[]}, {Mod1, Dep,[]}, Edge);
 add_dep(D,{'CORE',"All dependants",[Mod0,Name0,Edge0]}=F, Mod, Name, Edge) ->
     digraph:add_vertex(D, F),
     digraph:add_edge(D, F, {Mod0, Name0,[]}, Edge0),
@@ -159,6 +166,8 @@ add_edge({_, Name}=P, D, Mod, Edge) ->
 add_edges(D, Mod, Edge) ->
     lists:foreach(fun (T) -> add_edge(T, D, Mod, Edge) end, Mod:tests()).
 
+do_requires(EdgeLabel,{'CORE',"All dependants",[Mod0,Name0,Edge0]}=F, State) ->
+    lists:filter(fun (X) -> X =/= F end, lists:usort(do_all_dependants(EdgeLabel, {Mod0, Name0, []}, State) -- do_dependants(EdgeLabel,F,State, skip))); % FIXME: it is weeeeird, why we should do this -- ?
 do_requires(EdgeLabel, Test, State) ->
     ReqEdges = lists:filter(fun (E) ->
 				    case digraph:edge(State#state.graph, E) of
@@ -170,14 +179,24 @@ do_requires(EdgeLabel, Test, State) ->
 			    end, digraph:out_edges(State#state.graph, Test)),
     lists:map(fun (E) -> {_,_,D,_} = digraph:edge(State#state.graph, E), D end, ReqEdges).
 
-do_dependants(EdgeLabel, Test, State) ->
+do_dependants(EdgeLabel, Test, State, skip) ->
     DepEdges = lists:filter(fun (E) ->
 				filter_dependants(E, EdgeLabel, State)
 			end, digraph:in_edges(State#state.graph, Test)),
     lists:map(fun (E) -> {_,D,_,_} = digraph:edge(State#state.graph, E), D end, DepEdges).
+
+do_dependants(EdgeLabel, Test, State) ->
+    %% Nasty hack
+    NDeps = 
+	lists:filter(fun (V) ->
+			     lists:member(Test, do_requires(EdgeLabel, V, State))
+		     end,
+		     lists:filter(fun (V0) -> case V0 of {'CORE', "All dependants", _} -> true; _ -> false end end, digraph:vertices(State#state.graph))),
+    %% /Nasty hack
+    do_dependants(EdgeLabel, Test, State, skip) ++ NDeps.
     
 do_all_dependants(EdgeLabel, Test, State) ->
-    Deps = do_dependants(EdgeLabel, Test, State), 
+    Deps = do_dependants(EdgeLabel, Test, State, skip), 
     lists:flatten(lists:map(fun (X) ->
 				    [Deps|do_all_dependants(EdgeLabel, X, State)]
 			    end,

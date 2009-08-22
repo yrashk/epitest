@@ -16,6 +16,8 @@
 	 handle_event/3,
 	 handle_sync_event/4, handle_info/3, terminate/3, code_change/4]).
 
+-export([status/1]).
+
 -record(state, {epistate, 
 		waiting_r=[],
 		waiting_ir=[],
@@ -195,6 +197,8 @@ handle_event(_Event, StateName, State) ->
 %% gen_fsm:sync_send_all_state_event/2,3, this function is called to handle
 %% the event.
 %%--------------------------------------------------------------------
+handle_sync_event(status, _From, StateName, State) ->
+    {reply, {StateName, State}, StateName, State};
 handle_sync_event(Event, From, StateName, State) ->
     Reply = ok,
     {reply, Reply, StateName, State}.
@@ -294,3 +298,9 @@ merge(State, Epistate1) ->
     NewOpts = lists:keymerge(1,Epistate0#epistate.options, Epistate1#epistate.options),
     NewVars = lists:keymerge(1,Epistate0#epistate.variables, Epistate1#epistate.variables),
     Epistate0#epistate{ options = NewOpts, variables = NewVars }.
+
+%%--------------------------------------------------------------------
+%%% Public functions
+%%--------------------------------------------------------------------
+status(Worker) ->
+    gen_fsm:sync_send_all_state_event(Worker, status).
