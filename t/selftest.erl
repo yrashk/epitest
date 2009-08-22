@@ -203,7 +203,7 @@ test({"Parametrized node", UniqueId}) ->
 
 test("Parametrized node requirement test") ->
     [
-     {r, [{"Parametrized node",[now()]}]},
+     {r, [{"Parametrized node",[make_ref()]}]},
      {f,
       fun (State) ->
 	      ok
