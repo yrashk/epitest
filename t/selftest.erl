@@ -179,7 +179,7 @@ test("Pass the node") ->
     [
      {f,
       fun () ->
-	      ?PASS([{node,node()}])
+	      ?PASS([{node,node()},{"Pass the node", yes}])
       end}
      ];
       
@@ -191,7 +191,7 @@ test("Split node test") ->
       fun (State) ->
 	      false = node() == ?GET(node, State),
 	      true = proplists:get_value(splitnode, State#epistate.options) == node(),
-	      ?PASS([{splitted, node()}])
+	      ?PASS([{splitted, node()},{"Split node test", yes}])
       end}];
 
 test("Split node continuation test") -> 
@@ -200,7 +200,8 @@ test("Split node continuation test") ->
      {f,
       fun (State) ->
 	      Node = node(),
-	      Node = proplists:get_value(splitnode, State#epistate.options)
+	      Node = proplists:get_value(splitnode, State#epistate.options),
+	      ?PASS([{"Split node continuation test",yes}])
       end}];
 
 test("Split node split test") -> 
@@ -210,7 +211,8 @@ test("Split node split test") ->
      {f,
       fun (State) ->
 	      Node = node(),
-	      false = Node == ?GET(splitted, State)
+	      false = Node == ?GET(splitted, State),
+	      ?PASS([{"Split node split test",yes}])
       end}];
 
 test("Negative split node test") -> 
@@ -221,4 +223,17 @@ test("Negative split node test") ->
      {f,
       fun (State) ->
 	      true = node() == ?GET(node, State)
-      end}].
+      end}];
+
+test("All dependants test") ->
+    [{r, [?all_dependants("Pass the node",r)]},
+     {f,
+      fun (State) ->
+	      yes = ?GET("Pass the node", State),
+	      yes = ?GET("Split node test", State),
+	      yes = ?GET("Split node continuation test", State),
+	      yes = ?GET("Split node split test", State)
+	      % we can't check "Negative split node test" for now, because it is negative
+      end
+      }].
+
