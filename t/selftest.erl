@@ -301,5 +301,10 @@ test("Repeat while test") -> % TODO: make a better test
 	      end,
 	      get(counter)
       end}
-     ].
+     ];
+
+test("Another module's test dependency") ->
+    [{r,[{anothertest,"Just some test"}]}];
+test("Another module's test dependency #2") ->
+    [{r,[{anothertest,"Just some test #2", []}]}].
     
