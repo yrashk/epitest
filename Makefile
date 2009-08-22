@@ -8,7 +8,10 @@ ebin/epitest.app: ebin/epitest.app.src compile
 	@cat ebin/epitest.app.src | sed s/%vsn%/$(VSN)/g > ebin/epitest.app
 
 compile:
-	@erl -noshell -eval "make:all($(MAKEARG))" -s erlang halt
+	@erl -pa ebin -noshell -eval "make:all($(MAKEARG))" -s erlang halt
+
+selftest: compile
+	@erl -noshell -pa t ebin -s epitest -eval "epitest:add_module(selftest)" -s epitest run 
 
 clean:
 	rm -rf ebin/*.app ebin/*.beam

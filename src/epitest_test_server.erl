@@ -79,7 +79,6 @@ handle_cast({add_module, Mod}, State) ->
     {noreply, State};
 
 handle_cast(run, State) ->
-%    [ add_edges(State#state.graph, epitest_util_tests, Edge) || Edge <- [r,ir,fr] ],
     Tests = lists:foldl(fun ({Mod,T,A},Tests) ->
 				{ok, Worker} = supervisor:start_child(epitest_test_sup, [#epistate{test={Mod,T,A}}]),
 				dict:store({Mod,T,A}, Worker, Tests)
