@@ -79,9 +79,7 @@ handle_call(_Request, _From, State) ->
 %% Description: Handling cast messages
 %%--------------------------------------------------------------------
 handle_cast({add_module, Mod}, State) ->
-    lists:foreach(fun ({_Line,T}) ->
-			  digraph:add_vertex(State#state.graph, {Mod, T,[]})
-		  end, Mod:tests()),
+    lists:foreach(fun (T) -> add_vertex(T, Mod, State) end, Mod:tests()),
     [ add_edges(State#state.graph, Mod, Edge) || Edge <- [r,ir,fr] ],
     {noreply, State};
 
@@ -143,11 +141,19 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+add_vertex({_Line, T}, Mod, State) when is_tuple(T) ->
+    skip;
+add_vertex({_Line, T}, Mod, State) ->
+    digraph:add_vertex(State#state.graph, {Mod, T,[]}).
+
 add_dep(D,Dep, Mod, Name, Edge) when is_list(Dep) ->
     digraph:add_edge(D, {Mod, Name,[]}, {Mod, Dep,[]}, Edge);
-add_dep(D,{Mod1, Dep}, Mod, Name, Edge) when is_list(Dep) ->
+add_dep(D,{Mod1, Dep}, Mod, Name, Edge) when is_atom(Mod1) andalso is_list(Dep) ->
     digraph:add_vertex(D, {Mod1, Dep, []}),
     digraph:add_edge(D, {Mod, Name,[]}, {Mod1, Dep,[]}, Edge);
+add_dep(D,{Dep, Args}, Mod, Name, Edge) when is_list(Dep) ->
+    digraph:add_vertex(D, {Mod, Dep, Args}),
+    digraph:add_edge(D, {Mod, Name,[]}, {Mod, Dep,Args}, Edge);
 add_dep(D,{'CORE',"All dependants",[Mod0,Name0,Edge0]}=F, Mod, Name, Edge) ->
     digraph:add_vertex(D, F),
     digraph:add_edge(D, F, {Mod0, Name0,[]}, Edge0),

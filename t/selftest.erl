@@ -193,6 +193,24 @@ test("Check the variable after alteration") ->
       end}
      ];
 
+test({"Parametrized node", UniqueId}) ->
+    [
+     {f,
+      fun () ->
+	      ok
+      end}
+     ];
+
+test("Parametrized node requirement test") ->
+    [
+     {r, [{"Parametrized node",[now()]}]},
+     {f,
+      fun (State) ->
+	      ok
+      end}
+     ];
+
+
 test("Pass the node") ->
     [
      {f,
@@ -242,6 +260,8 @@ test("Negative split node test") ->
       fun (State) ->
 	      true = node() == ?GET(node, State)
       end}];
+
+
 
 test("All dependants test") ->
     [{r, [?all_dependants("Pass the node",r)]},

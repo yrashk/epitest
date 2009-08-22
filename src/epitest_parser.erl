@@ -25,7 +25,13 @@ func(Line, Name, Arity, Clauses, St) ->
 
 clauses([C|Cs],St) ->
     {clause, L,H0,_G,_B} = C,
-    H = hd(heads(H0)),
+    H1 = hd(heads(H0)),
+    H = case lists:flatten(H1) of
+	    H1 ->
+		H1;
+	    _ ->
+		list_to_tuple(H1)
+	end,
     [{L,H}|clauses(Cs,St)];
 clauses([],_St) ->
     [].

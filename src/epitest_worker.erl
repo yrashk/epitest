@@ -293,7 +293,7 @@ get_info(State) ->
     case Test of
 	{'CORE', "All dependants", [M,T,E]} ->
 	    [{r, [{M,T,E}]}];
-	{_,_,_} ->
+	{_,_,[]} ->
 	    apply(Mod, test, [Name]);
 	_ ->
 	    apply(Mod, test, [list_to_tuple([Name|Args])])
