@@ -101,6 +101,7 @@ test("Simple test with a multiple r dependency") ->
 	      ok
       end}
     ];
+
     
 test("Simple test with a multiple r dependency that should never be reached") ->
     [
@@ -110,6 +111,18 @@ test("Simple test with a multiple r dependency that should never be reached") ->
 	     throw("it shouldn't have been reached")
       end}
     ];
+
+test("Testing for different variables coming from multiple dependencies") ->
+    [
+     {r, ["Pass the variable","Pass the node"]},
+     {f,
+      fun (State) ->
+	      Node = node(),
+	      Node = ?GET(node, State),
+	      "val" = ?GET(var, State)
+      end}
+    ];
+
 
 test("Simple test with a multiple fr dependency") ->
     [
