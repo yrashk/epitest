@@ -193,7 +193,7 @@ test("Check the variable after alteration") ->
       end}
      ];
 
-test({"Parametrized node", UniqueId}) ->
+test(?instantiable("Parametrized node")) ->
     [
      {f,
       fun () ->
@@ -203,7 +203,7 @@ test({"Parametrized node", UniqueId}) ->
 
 test("Parametrized node requirement test") ->
     [
-     {r, [{"Parametrized node",[make_ref()]}]},
+     {r, [?instantiate("Parametrized node")]},
      {f,
       fun (State) ->
 	      ok
