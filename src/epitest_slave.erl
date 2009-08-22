@@ -6,7 +6,7 @@ get_path() ->
 
 start_link() ->
     {ok, Host} = inet:gethostname(),
-    {SNodename, Nodename} = generate_nodename(),
+    {_SNodename, Nodename} = generate_nodename(),
     %{ok, Cwd} = file:get_cwd(),
     %Dir = proplists:get_value(dir, application:get_all_env(epitest), "."),
     %NewDir = Cwd ++ "/" ++ Dir ++ "/" ++ SNodename,

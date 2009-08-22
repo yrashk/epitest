@@ -53,7 +53,7 @@ init([]) ->
 %% each installed event handler to handle the event. 
 %%--------------------------------------------------------------------
 
-handle_event({_, #epistate{test = {'CORE',_,_}}=Epistate}, State) ->
+handle_event({_, #epistate{test = {'CORE',_,_}}}, State) ->
     {ok, State}; % skip core tests
 handle_event({success, Epistate}, State) ->
     {M,T,A} = Epistate#epistate.test,

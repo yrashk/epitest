@@ -51,12 +51,12 @@ init([]) ->
 %% gen_event:notify/2 or gen_event:sync_notify/2, this function is called for
 %% each installed event handler to handle the event. 
 %%--------------------------------------------------------------------
-handle_event({_, #epistate{test = {'CORE',_,_}}=Epistate}, State) ->
+handle_event({_, #epistate{test = {'CORE',_,_}}}, State) ->
     {ok, State}; % skip core tests
-handle_event({success, Epistate}, State) ->
+handle_event({success, _Epistate}, State) ->
     io:format("."),
     {ok, State};
-handle_event({failure, Epistate}, State) ->
+handle_event({failure, _Epistate}, State) ->
     io:format("F"),
     {ok, State};
 handle_event(finished, State) ->

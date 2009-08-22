@@ -92,7 +92,7 @@ handle_cast(run, State) ->
 
 handle_cast({notify, Tests, Kind, Epistate, Test}, State) ->
     NewTests = dict:erase(Test, State#state.tests),
-    spawn(fun () -> wipeout_unreachables(Kind, NewTests, Test) end),
+    spawn(fun () -> wipeout_unreachables(Kind, Test) end),
     lists:foreach(fun (T) ->
 			  case dict:find(T, State#state.tests) of
 			      {ok, TestPid} ->
@@ -141,7 +141,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-add_vertex({_Line, T}, Mod, State) when is_tuple(T) ->
+add_vertex({_Line, T}, _Mod, _State) when is_tuple(T) ->
     skip;
 add_vertex({_Line, T}, Mod, State) ->
     digraph:add_vertex(State#state.graph, {Mod, T,[]}).
@@ -166,13 +166,13 @@ add_edge({_, Name}, D, Mod, Edge) when is_list(Name) ->
     Info = apply(Mod, test, [Name]),
     Deps = proplists:get_value(Edge, Info, []),
     lists:foreach(fun(Dep) -> add_dep(D,Dep, Mod, Name, Edge) end, Deps);
-add_edge({_, Name}=P, D, Mod, Edge) ->
+add_edge({_, _Name}, _D, _Mod, _Edge) ->
     ok. 
 
 add_edges(D, Mod, Edge) ->
     lists:foreach(fun (T) -> add_edge(T, D, Mod, Edge) end, Mod:tests()).
 
-do_requires(EdgeLabel,{'CORE',"All dependants",[Mod0,Name0,Edge0]}=F, State) ->
+do_requires(EdgeLabel,{'CORE',"All dependants",[Mod0,Name0,_Edge0]}=F, State) ->
     lists:filter(fun (X) -> X =/= F end, lists:usort(do_all_dependants(EdgeLabel, {Mod0, Name0, []}, State) -- do_dependants(EdgeLabel,F,State, skip))); % FIXME: it is weeeeird, why we should do this -- ?
 do_requires(EdgeLabel, Test, State) ->
     ReqEdges = lists:filter(fun (E) ->
@@ -218,9 +218,9 @@ filter_dependants(E, EdgeLabel,State) ->
 	    false
     end.
     
-wipeout_unreachables(failed, Tests, Test) ->
+wipeout_unreachables(failed, Test) ->
     gen_server:cast(epitest_test_server, {wipeout, epitest:dependants(Test, r)});
-wipeout_unreachables(passed, Tests, Test) ->
+wipeout_unreachables(passed, Test) ->
     gen_server:cast(epitest_test_server, {wipeout, epitest:dependants(Test, fr)}).
 
 do_check_tests_presence(Tests) ->
