@@ -22,23 +22,23 @@ test("Simple test with a single r dependency") ->
     ];
 
 test("Simple test that fails") ->
-    [{f,
+    [{fmsg, "It should have failed, that's all right"},
+     {f,
       fun () ->
-	      io:format("[next failure is ok]"),
 	      5 = apply(fun erlang:'+'/2, [2,2])
       end}];
 
 test("Another simple test that fails") ->
-    [{f,
+    [{fmsg, "It should have failed, that's all right"},
+     {f,
       fun () ->
-	      io:format("[next failure is ok]"),
 	      5 = apply(fun erlang:'+'/2, [2,2])
       end}];
 
 test("Another simple test that fails (with State)") ->
-    [{f,
+    [{fmsg, "It should have failed, that's all right"},
+     {f,
       fun (_State) ->
-	      io:format("[next failure is ok]"),
 	      5 = apply(fun erlang:'+'/2, [2,2])
       end}];
 
@@ -50,10 +50,10 @@ test("Simple negative test") ->
       end}];
 
 test("Simple negative test that fails") ->
-    [negative,
+    [{fmsg, "It should have failed, that's all right"},
+     negative,
      {f,
       fun () ->
-	      io:format("[next failure is ok]"),
 	      4 = apply(fun erlang:'+'/2, [2,2])
       end}];
 
