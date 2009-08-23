@@ -70,7 +70,7 @@ handle_event({success, Epistate}, State) ->
 		     end, epitest:requires(Epistate#epistate.test)),
     Portion = Test ++ " [color=green];\n" ++ Deps ++ Reqs,
     {ok, State#state{ digraph = State#state.digraph ++ Portion}};
-handle_event({failure, #epistate{failure={epitest_pending, Reason}}=Epistate}, State) ->
+handle_event({failure, #epistate{failure={epitest_pending, _Reason}}=Epistate}, State) ->
     {M,T,A} = Epistate#epistate.test,
     Test = "\"" ++ escape(io_lib:format("~w:~s(~1000p)",[M,T,A])) ++ "\"",
     Deps = lists:map(fun (D) ->
