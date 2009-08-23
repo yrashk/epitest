@@ -2,7 +2,7 @@
 -include_lib("epitest/include/epitest.hrl").
 
 test("Simple test with no dependencies, no function") ->
-    [];
+    [{f, fun() -> ok end}];
 
 test("Simple test with no dependencies") ->
     [
@@ -345,11 +345,12 @@ test("Repeat while test") -> % TODO: make a better test
      ];
 
 test("Another module's test dependency") ->
-    [{r,[{anothertest,"Just some test"}]}];
+    [{r,[{anothertest,"Just some test"}]},{f, fun() -> ok end}];
+
 test("Another module's test dependency #2") ->
-    [{r,[{anothertest,"Just some test #2", []}]}];
+    [{r,[{anothertest,"Just some test #2", []}]},{f, fun() -> ok end}];
 test("Another module's instantiable dependency") ->
-    [{r, [?instantiate({anothertest, "Instantiable"})]}];
+    [{r, [?instantiate({anothertest, "Instantiable"})]},{f, fun() -> ok end}];
    
 test("Some test with forward dependencies") ->
     [{d, ["Some forward dependency",
@@ -392,7 +393,8 @@ test("FPending test") ->
 
 test("Another fpending test") ->
     [{f,
-      fpending("Just another pending implementation (and it should be pending)")}].
-      
+      fpending("Just another pending implementation (and it should be pending)")}];
+test("When no f specified, it should be pending (yellow)") ->
+    [].      
 	      
       

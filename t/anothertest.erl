@@ -2,11 +2,11 @@
 -include_lib("epitest/include/epitest.hrl").
 
 test("Just some test") ->
-    [];
+    [{f, fun() -> ok end}];
 test("Just some test #2") ->
-    [];
+    [{f, fun() -> ok end}];
 test("Instantiable") ->
-    [];
+    [{f, fun() -> ok end}];
 test("Some forward dependency") ->
     [{f,
       fun (State) ->

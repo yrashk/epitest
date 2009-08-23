@@ -303,15 +303,16 @@ get_info(State) ->
     Epistate = State#state.epistate,
     Test = Epistate#epistate.test,
     {Mod, Name, Args} = Test,
-    case Test of
-	{'CORE', "All dependants", [M,T,E]} ->
-	    [{r, [{M,T,E}]}];
-	{_,_,[]} ->
-	    apply(Mod, test, [Name]);
-	_ ->
-	    apply(Mod, test, [list_to_tuple([Name|Args])])
-    end.
-
+    Info0 =
+	case Test of
+	    {'CORE', "All dependants", [M,T,E]} ->
+		[{r, [{M,T,E}]}];
+	    {_,_,[]} ->
+		apply(Mod, test, [Name]);
+	    _ ->
+		apply(Mod, test, [list_to_tuple([Name|Args])])
+	end,
+    Info0 ++ [{f,epitest_helpers:fpending()}].
 
 merge_vars(State, Vars) ->
     Epistate0 = (State#state.epistate),
