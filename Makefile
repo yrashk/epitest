@@ -10,7 +10,7 @@ ebin/epitest.app: ebin/epitest.app.src compile
 compile:
 	@erl -pa ebin -noshell -eval "make:all($(MAKEARG))" -s erlang halt
 
-selftest: all
+test: all
 	@mkdir -p _tests
 	@erl -noshell -epitest dir \"_tests\" -sname epitest -pa t ebin -s epitest -s epitest modules selftest -s epitest_console_logger -s epitest run 
 
