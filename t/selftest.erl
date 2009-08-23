@@ -206,17 +206,27 @@ test("Check the variable after alteration") ->
       end}
      ];
 
-test(?instantiable("Parametrized test")) ->
+test("Skipped test") -> 
     [
+     skip,
+     {f,
+      fun () ->
+	      throw("This test should have been skipped!")
+      end}
+     ];
+
+test("Instantiable test") -> % makes use of skip!
+    [
+     skip,
      {f,
       fun () ->
 	      ok
       end}
      ];
 
-test("Parametrized test requirement test") ->
+test("Instantiable test requirement test") ->
     [
-     {r, [?instantiate("Parametrized test")]},
+     {r, [?instantiate("Instantiable test")]},
      {f,
       fun () ->
 	      ok
@@ -330,4 +340,4 @@ test("Another module's test dependency #2") ->
     [{r,[{anothertest,"Just some test #2", []}]}];
 test("Another module's instantiable dependency") ->
     [{r, [?instantiate({anothertest, "Instantiable"})]}].
-    
+   

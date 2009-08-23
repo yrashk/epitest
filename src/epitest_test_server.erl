@@ -147,7 +147,13 @@ code_change(_OldVsn, State, _Extra) ->
 add_vertex({_Line, T}, _Mod, _State) when is_tuple(T) ->
     skip;
 add_vertex({_Line, T}, Mod, State) ->
-    digraph:add_vertex(State#state.graph, {Mod, T,[]}).
+    Info = apply(Mod, test, [T]),
+    case proplists:get_value(skip, Info) of
+	true ->
+	    skip;
+	_ ->
+	    digraph:add_vertex(State#state.graph, {Mod, T,[]})
+    end.
 
 add_dep(D,Dep, Mod, Name, Edge) when is_list(Dep) ->
     digraph:add_edge(D, {Mod, Name,[]}, {Mod, Dep,[]}, Edge);

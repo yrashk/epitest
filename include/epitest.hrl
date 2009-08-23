@@ -30,4 +30,3 @@
 		{M, T, A ++ [Instance]}
 	end).
 
--define(instantiable(T), {T, _Instance}).

@@ -5,5 +5,5 @@ test("Just some test") ->
     [];
 test("Just some test #2") ->
     [];
-test(?instantiable("Instantiable")) ->
+test("Instantiable") ->
     [].
