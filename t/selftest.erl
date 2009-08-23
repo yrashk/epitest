@@ -402,6 +402,8 @@ test("Another fpending test") ->
     [{f,
       fpending("Just another pending implementation (and it should be pending)")}];
 test("When no f specified, it should be pending (yellow)") ->
-    [].      
-	      
+    [];
+
+test("Nodesplit pending test, should be pending (yellow)") ->	      
+    [nodesplit].
       

@@ -272,6 +272,8 @@ do_run(Pid,Info,State) ->
 	case Result of
 	    {badrpc, {'EXIT', Err}} ->
 		report_result(Pid, Info, State, Err, N);
+	    {epitest_pending, Pending} -> % this is kinda stupid, but rpc:call does not tell us it was un exception
+		report_result(Pid, Info, State, {throw, {epitest_pending, Pending}}, true and not N);
 	    _ ->
 		report_result(Pid, Info, State, Result, true and not N)
 	end
@@ -305,7 +307,7 @@ get_info(State) ->
     {Mod, Name, Args} = Test,
     case Test of
 	{'CORE', "All dependants", [M,T,E]} ->
-	    [{r, [{M,T,E}]}];
+	    [{r, [{M,T,E}]},{f, fun () -> ok end}];
 	{_,_,[]} ->
 	    apply(Mod, test, [Name]);
 	_ ->
