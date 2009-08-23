@@ -342,7 +342,11 @@ test("Another module's instantiable dependency") ->
     [{r, [?instantiate({anothertest, "Instantiable"})]}];
    
 test("Some test with forward dependencies") ->
-    [{d, ["Some forward dependency",{anothertest, "Some forward dependency"}]},
+    [{d, ["Some forward dependency",
+	  {anothertest, "Some forward dependency"},
+	  {"Parametrized forward dependency",["par1"]},
+	  {anothertest, "Parametrized forward dependency",["par1"]}
+	 ]},
      {f,
       fun () ->
 	      ?PASS([{var, "val"}])
@@ -353,8 +357,15 @@ test("Some forward dependency") ->
       fun (State) ->
 	      "val" = ?GET(var, State)
       end}
-     ].
+     ];
 	      
+test({"Parametrized forward dependency", Param}) ->
+    [{f,
+      fun (State) ->
+	      "val" = ?GET(var, State),
+	      "par1" = Param
+      end}
+     ].
       
 	      
       

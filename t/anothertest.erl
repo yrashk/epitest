@@ -12,8 +12,15 @@ test("Some forward dependency") ->
       fun (State) ->
 	      "val" = ?GET(var, State)
       end}
-    ].
-	      
+    ];
+      
+test({"Parametrized forward dependency", Param}) ->
+    [{f,
+      fun (State) ->
+	      "val" = ?GET(var, State),
+	      "par1" = Param
+      end}
+     ].
       
 	      
       
