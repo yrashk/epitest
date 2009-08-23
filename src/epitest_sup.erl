@@ -40,7 +40,9 @@ init([]) ->
 		  permanent,infinity,supervisor,[epitest_test_sup]},
     TestLogMgr = {epitest_log, {gen_event, start_link, [{local, epitest_log}]},
 		  permanent, 2000, worker, [gen_event]},
-    {ok,{{one_for_one,0,1}, [TestServer, TestSup, TestLogMgr]}}.
+    SlaveServer = {epitest_slave, {epitest_slave, start_server_link, []},
+		  permanent, 2000, worker, [epitest_slave]},
+    {ok,{{one_for_one,0,1}, [TestServer, TestSup, TestLogMgr,SlaveServer]}}.
 
 %%====================================================================
 %% Internal functions

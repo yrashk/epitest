@@ -57,15 +57,15 @@ handle_event({_, #epistate{test = {'CORE',_,_}}}, State) ->
     {ok, State}; % skip core tests
 handle_event({success, Epistate}, State) ->
     {M,T,A} = Epistate#epistate.test,
-    io:format("\e[32m[PASSED] (~fs) ~p:'~s'(~p)\e[0m~n", [Epistate#epistate.elapsed/1000000,M,T,A]),
+    io:format("\e[32m[PASSED] \e[90m~-20w\e[32m (~fs) ~p:'~s'(~p)\e[0m~n", [enode(Epistate),Epistate#epistate.elapsed/1000000,M,T,A]),
     {ok, State};
 handle_event({failure, #epistate{failure={epitest_pending, Reason}}=Epistate}, State) ->
     {M,T,A} = Epistate#epistate.test,
-    io:format("\e[33m[PENDING] (~fs) ~p:'~s'(~p): ~p\e[0m~n", [Epistate#epistate.elapsed/1000000,M,T,A,Reason]),
+    io:format("\e[33m[PENDNG] \e[90m~-20w\e[33m (~fs) ~p:'~s'(~p): ~p\e[0m~n", [enode(Epistate),Epistate#epistate.elapsed/1000000,M,T,A,Reason]),
     {ok, State};
 handle_event({failure, Epistate}, State) ->
     {M,T,A} = Epistate#epistate.test,
-    io:format("\e[31m[FAILED] (~fs) ~p:'~s'(~p): ~p\e[0m~n", [Epistate#epistate.elapsed/1000000,M,T,A,Epistate#epistate.failure]),
+    io:format("\e[31m[FAILED] \e[90m~-20w\e[31m (~fs) ~p:'~s'(~p): ~p\e[0m~n", [enode(Epistate),Epistate#epistate.elapsed/1000000,M,T,A,Epistate#epistate.failure]),
     {ok, State};
 handle_event(finished, State) ->
     erlang:halt(),
@@ -118,7 +118,9 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-
+enode(#epistate{}=Epistate) ->
+    proplists:get_value(splitnode, Epistate#epistate.options, node()).
+    
 %%--------------------------------------------------------------------
 %%% Public functions
 %%--------------------------------------------------------------------
