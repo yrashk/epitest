@@ -97,18 +97,18 @@ ready(run, State) ->
     spawn(fun () -> do_run(Pid,Info, State1) end),
     {next_state, running, State1}.
 
-running({success, {epitest_variables, Vars}}, State) ->
+running({success, {epitest_variables, Vars}, State}, _State0) ->
     Epistate = merge_vars(State, Vars),
     gen_event:notify(epitest_log, {success, Epistate}),
     NotificationList = lists:flatten([epitest:dependants((State#state.epistate)#epistate.test, Label) || Label <- [r,ir]]),
     gen_server:cast(epitest_test_server, {notify, NotificationList, passed, Epistate, (State#state.epistate)#epistate.test}),
     {next_state, passed, State#state{ epistate = Epistate}};
 
-running({success, _}, State) ->
-    gen_fsm:send_event(self(), {success, {epitest_variables, []}}),
+running({success, _, State}, _State0) ->
+    gen_fsm:send_event(self(), {success, {epitest_variables, []}, State}),
     {next_state, running, State};
 
-running({pending, Reason}, State) ->
+running({pending, Reason, State}, _State0) ->
     Epistate0 = (State#state.epistate),
     Epistate = Epistate0#epistate{ failure = {epitest_pending, Reason} },
     gen_event:notify(epitest_log, {failure, Epistate}),
@@ -116,7 +116,7 @@ running({pending, Reason}, State) ->
     gen_server:cast(epitest_test_server, {notify, NotificationList, failed, Epistate, (State#state.epistate)#epistate.test}),
     {next_state, failed, State#state{epistate=Epistate}};
 
-running({failure, Result}, State) ->
+running({failure, Result, State}, _State0) ->
     Epistate0 = (State#state.epistate),
     Info = get_info(State),
     Epistate = Epistate0#epistate{ failure = {proplists:get_value(fmsg, Info, "Exception caught"), Result} },
@@ -262,43 +262,42 @@ do_run(Pid,Info,State) ->
 	   end,
     N = proplists:get_value(negative, Info, false),
     Nodesplit = proplists:get_value(splitnode, Opts) =/= undefined,
-    try
-	Result = case Nodesplit of
-		     true ->
-			 rpc:call(proplists:get_value(splitnode, Opts), erlang, apply, [F,Args]);
-		     _ ->
-			 apply(F,Args)
-		 end,
-	case Result of
-	    {badrpc, {'EXIT', Err}} ->
-		report_result(Pid, Info, State, Err, N);
-	    {epitest_pending, Pending} -> % this is kinda stupid, but rpc:call does not tell us it was un exception
-		report_result(Pid, Info, State, {throw, {epitest_pending, Pending}}, true and not N);
-	    _ ->
-		report_result(Pid, Info, State, Result, true and not N)
-	end
-    catch K:V ->
-	    report_result(Pid, Info, State, {K,V}, N)
+    Functor = fun () ->
+		      case Nodesplit of
+			  true ->
+			      rpc:call(proplists:get_value(splitnode, Opts), erlang, apply, [F,Args]);
+			  _ ->
+			      apply(F,Args)
+		      end
+	      end,
+    {Timer, Result} = timer:tc(erlang,apply,[Functor,[]]),
+    case Result of
+	{badrpc, {'EXIT', {Err,_}}} ->
+	    report_result(Pid, Info, State#state{epistate=Epistate#epistate{elapsed=Timer}}, Err, N);
+	{'EXIT',{Err,_}} ->
+	    report_result(Pid, Info, State, Err, N);
+	_ ->
+	    report_result(Pid, Info, State#state{epistate=Epistate#epistate{elapsed=Timer}}, Result, true and not N)
     end.
 
-report_result(Pid, _, _, {throw, {epitest_pending, Reason}}, _) ->
-    gen_fsm:send_event(Pid, {pending, Reason});
+report_result(Pid, _, State, {epitest_pending, Reason}, _) ->
+    gen_fsm:send_event(Pid, {pending, Reason, State});
 report_result(Pid, Info, State, Result, true) ->
     Repeat = proplists:get_value(repeat, Info),
     case Repeat of
 	{until, Result} ->
-	    gen_fsm:send_event(Pid, {success, Result});
+	    gen_fsm:send_event(Pid, {success, Result, State});
 	{until, _} ->
 	    do_run(Pid, Info, State);
 	{while, Result} ->
 	    do_run(Pid, Info, State);
 	{while, _} ->
-	    gen_fsm:send_event(Pid, {success, Result});
+	    gen_fsm:send_event(Pid, {success, Result, State});
 	_ ->
-	    gen_fsm:send_event(Pid, {success, Result})
+	    gen_fsm:send_event(Pid, {success, Result, State})
     end;
-report_result(Pid, _, _, Result, false) ->
-    gen_fsm:send_event(Pid, {failure, Result}).
+report_result(Pid, _, State, Result, false) ->
+    gen_fsm:send_event(Pid, {failure, Result, State}).
 
 
 get_info(State) ->

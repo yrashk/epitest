@@ -25,21 +25,21 @@ test("Simple test that fails") ->
     [{fmsg, "It should have failed, that's all right"},
      {f,
       fun () ->
-	      throw(ok)
+	      fail()
       end}];
 
 test("Another simple test that fails") ->
     [{fmsg, "It should have failed, that's all right"},
      {f,
       fun () ->
-	      throw(ok)
+	      fail()
       end}];
 
 test("Another simple test that fails (with State)") ->
     [{fmsg, "It should have failed, that's all right"},
      {f,
       fun (_State) ->
-	      throw(ok)
+	      fail()
       end}];
 
 test("Simple negative test") ->
@@ -62,7 +62,7 @@ test("Simple test with a single r dependency that should never be reached") ->
      {r, ["Simple test that fails"]},
      {f,
       fun () ->
-	     throw("it shouldn't have been reached")
+	     fail("it shouldn't have been reached")
       end}
     ];
 
@@ -108,7 +108,7 @@ test("Simple test with a multiple r dependency that should never be reached") ->
      {r, ["Simple test that fails","Simple test with no dependencies"]},
      {f,
       fun () ->
-	     throw("it shouldn't have been reached")
+	     fail("it shouldn't have been reached")
       end}
     ];
 
@@ -139,7 +139,7 @@ test("Simple test with a multiple fr dependency that should never be reached") -
      {fr, ["Simple test that fails","Simple test with no dependencies"]},
      {f,
       fun () ->
-	     throw("it shouldn't have been reached")
+	     fail("it shouldn't have been reached")
       end}
     ];
 
@@ -149,7 +149,7 @@ test("Another simple test with a multiple fr dependency that should never be rea
      {fr, ["Simple test with no dependencies, no function","Simple test with no dependencies"]},
      {f,
       fun () ->
-	     throw("it shouldn't have been reached")
+	     fail("it shouldn't have been reached")
       end}
     ];
 
@@ -211,7 +211,7 @@ test("Skipped test") ->
      skip,
      {f,
       fun () ->
-	      throw("This test should have been skipped!")
+	      fail("This test should have been skipped!")
       end}
      ];
 
