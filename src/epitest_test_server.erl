@@ -83,7 +83,7 @@ handle_call(_Request, _From, State) ->
 %%--------------------------------------------------------------------
 handle_cast({add_module, Mod}, State) ->
     lists:foreach(fun (T) -> add_vertex(T, Mod, State) end, Mod:tests()),
-    [ add_edges(State#state.graph, Mod, Edge) || Edge <- [r,ir,fr] ],
+    [ add_edges(State#state.graph, Mod, Edge) || Edge <- [r,ir,fr,d,id,fd] ],
     {noreply, State};
 
 handle_cast(run, State) ->
@@ -155,21 +155,36 @@ add_vertex({_Line, T}, Mod, State) ->
 	    digraph:add_vertex(State#state.graph, {Mod, T,[]})
     end.
 
-add_dep(D,Dep, Mod, Name, Edge) when is_list(Dep) ->
+add_dep(D,[_|_]=Dep, Mod, Name, Edge) when Edge == r; Edge == ir; Edge == fr ->
     digraph:add_edge(D, {Mod, Name,[]}, {Mod, Dep,[]}, Edge);
-add_dep(D,{Mod1, Dep}, Mod, Name, Edge) when is_atom(Mod1) andalso is_list(Dep) ->
+add_dep(D,[_|_]=Dep, Mod, Name, Edge) when Edge == d; Edge == id; Edge == fd ->
+    digraph:add_edge(D,{Mod, Dep,[]}, {Mod, Name,[]}, toggle_dependency(Edge));
+add_dep(D,{Mod1, Dep}, Mod, Name, Edge) when is_atom(Mod1) andalso is_list(Dep) andalso (Edge == r orelse Edge == ir orelse Edge == fr)  ->
     digraph:add_vertex(D, {Mod1, Dep, []}),
     digraph:add_edge(D, {Mod, Name,[]}, {Mod1, Dep,[]}, Edge);
-add_dep(D,{Dep, Args}, Mod, Name, Edge) when is_list(Dep) ->
+add_dep(D,{Mod1, Dep}, Mod, Name, Edge) when is_atom(Mod1) andalso is_list(Dep) andalso (Edge == d orelse Edge == id orelse Edge == fd) ->
+    digraph:add_vertex(D, {Mod1, Dep, []}),
+    digraph:add_edge(D, {Mod1, Dep,[]}, {Mod, Name,[]}, toggle_dependency(Edge));
+add_dep(D,{[_|_]=Dep, Args}, Mod, Name, Edge) when Edge == r; Edge == ir; Edge == fr  ->
     digraph:add_vertex(D, {Mod, Dep, Args}),
     digraph:add_edge(D, {Mod, Name,[]}, {Mod, Dep,Args}, Edge);
-add_dep(D,{'CORE',"All dependants",[Mod0,Name0,Edge0]}=F, Mod, Name, Edge) ->
+add_dep(D,{[_|_]=Dep, Args}, Mod, Name, Edge) when Edge == d; Edge == id; Edge == fd  ->
+    digraph:add_vertex(D, {Mod, Dep, Args}),
+    digraph:add_edge(D, {Mod, Dep,Args}, {Mod, Name,[]}, toggle_dependency(Edge));
+add_dep(D,{'CORE',"All dependants",[Mod0,Name0,Edge0]}=F, Mod, Name, Edge) when Edge == r; Edge == ir; Edge == fr  ->
     digraph:add_vertex(D, F),
     digraph:add_edge(D, F, {Mod0, Name0,[]}, Edge0),
     digraph:add_edge(D, {Mod, Name,[]}, F, Edge);
-add_dep(D,{Mod1, Dep, Args}, Mod, Name, Edge) when is_list(Dep) ->
+add_dep(D,{'CORE',"All dependants",[Mod0,Name0,Edge0]}=F, Mod, Name, Edge) when Edge == d; Edge == id; Edge == fd  ->
+    digraph:add_vertex(D, F),
+    digraph:add_edge(D, {Mod0, Name0,[]}, F, Edge0),
+    digraph:add_edge(D, F, {Mod, Name,[]}, toggle_dependency(Edge));
+add_dep(D,{Mod1, [_|_]=Dep, Args}, Mod, Name, Edge) when Edge == r; Edge == ir; Edge == fr ->
     digraph:add_vertex(D, {Mod1, Dep, Args}),
-    digraph:add_edge(D, {Mod, Name,[]}, {Mod1, Dep, Args}, Edge).
+    digraph:add_edge(D, {Mod, Name,[]}, {Mod1, Dep, Args}, Edge);
+add_dep(D,{Mod1, [_|_]=Dep, Args}, Mod, Name, Edge) when Edge == d; Edge == id; Edge == fd ->
+    digraph:add_vertex(D, {Mod1, Dep, Args}),
+    digraph:add_edge(D, {Mod1, Dep, Args}, {Mod, Name,[]}, toggle_dependency(Edge)).
 
 add_edge({_, Name}, D, Mod, Edge) when is_list(Name) ->
     Info = apply(Mod, test, [Name]),
@@ -232,3 +247,9 @@ do_check_tests_presence(Tests) ->
        true ->
 	    skip
     end.
+
+toggle_dependency(d) -> r;
+toggle_dependency(id) -> ir;
+toggle_dependency(fd) -> fr;
+toggle_dependency(D) ->
+    throw({badarg, D}).

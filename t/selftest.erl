@@ -339,5 +339,22 @@ test("Another module's test dependency") ->
 test("Another module's test dependency #2") ->
     [{r,[{anothertest,"Just some test #2", []}]}];
 test("Another module's instantiable dependency") ->
-    [{r, [?instantiate({anothertest, "Instantiable"})]}].
+    [{r, [?instantiate({anothertest, "Instantiable"})]}];
    
+test("Some test with forward dependencies") ->
+    [{d, ["Some forward dependency",{anothertest, "Some forward dependency"}]},
+     {f,
+      fun () ->
+	      ?PASS([{var, "val"}])
+      end}
+     ];
+test("Some forward dependency") ->
+    [{f,
+      fun (State) ->
+	      "val" = ?GET(var, State)
+      end}
+     ].
+	      
+      
+	      
+      
