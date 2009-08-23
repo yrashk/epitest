@@ -251,7 +251,7 @@ code_change(_OldVsn, StateName, State, _Extra) ->
 do_run(Pid,Info,State) ->
     Epistate = (State#state.epistate),
     Opts = Epistate#epistate.options,
-    F = proplists:get_value(f, Info, fun () -> skip end),
+    F = proplists:get_value(f, Info, epitest_helpers:fpending()),
     Args = if 
 	       is_function(F,0) ->
 		   [];
@@ -303,16 +303,14 @@ get_info(State) ->
     Epistate = State#state.epistate,
     Test = Epistate#epistate.test,
     {Mod, Name, Args} = Test,
-    Info0 =
-	case Test of
-	    {'CORE', "All dependants", [M,T,E]} ->
-		[{r, [{M,T,E}]}];
-	    {_,_,[]} ->
-		apply(Mod, test, [Name]);
-	    _ ->
+    case Test of
+	{'CORE', "All dependants", [M,T,E]} ->
+	    [{r, [{M,T,E}]}];
+	{_,_,[]} ->
+	    apply(Mod, test, [Name]);
+	_ ->
 		apply(Mod, test, [list_to_tuple([Name|Args])])
-	end,
-    Info0 ++ [{f,epitest_helpers:fpending()}].
+    end.
 
 merge_vars(State, Vars) ->
     Epistate0 = (State#state.epistate),
