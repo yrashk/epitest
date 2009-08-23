@@ -316,13 +316,13 @@ get_info(State) ->
 
 merge_vars(State, Vars) ->
     Epistate0 = (State#state.epistate),
-    NewVars = lists:keymerge(1,Vars, Epistate0#epistate.variables),
+    NewVars = Vars ++ Epistate0#epistate.variables,
     Epistate0#epistate{ variables = NewVars }.
 
 merge(State, Epistate1) ->
     Epistate0 = (State#state.epistate),
-    NewOpts = lists:keymerge(1,Epistate0#epistate.options, Epistate1#epistate.options),
-    NewVars = lists:keymerge(1,Epistate0#epistate.variables, Epistate1#epistate.variables),
+    NewOpts = Epistate1#epistate.options ++ Epistate0#epistate.options,
+    NewVars = Epistate1#epistate.variables ++ Epistate0#epistate.variables,
     Epistate0#epistate{ options = NewOpts, variables = NewVars }.
 
 %%--------------------------------------------------------------------
