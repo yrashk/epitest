@@ -87,6 +87,7 @@ handle_cast({add_module, Mod}, State) ->
     {noreply, State};
 
 handle_cast(run, State) ->
+    change_directory(),
     Tests = lists:foldl(fun ({Mod,T,A},Tests) ->
 				{ok, Worker} = supervisor:start_child(epitest_test_sup, [#epistate{test={Mod,T,A}}]),
 				dict:store({Mod,T,A}, Worker, Tests)
@@ -253,3 +254,17 @@ toggle_dependency(id) -> ir;
 toggle_dependency(fd) -> fr;
 toggle_dependency(D) ->
     throw({badarg, D}).
+
+change_directory() ->
+    {{Year, Month, Day},{Hour, Minute, Second}} = erlang:localtime(),
+    Name = io_lib:format("epitest_~w-~w-~w_~w-~w-~w",[Year,Month,Day,Hour,Minute,Second]),
+    Dir = proplists:get_value(dir,application:get_all_env(epitest), ".") ++ "/" ++ Name,
+    ok = file:make_dir(Dir),
+    {ok, Cwd} = file:get_cwd(),
+    ok = file:set_cwd(Dir),
+    code:add_paths(lists:map(fun (P) -> transform_code_path(Cwd,P) end, code:get_path())).
+
+transform_code_path(_OriginalCwd, [$/|_]=P) ->
+    P;
+transform_code_path(OriginalCwd,P) ->
+    OriginalCwd ++ "/" ++ P.
