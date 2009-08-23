@@ -233,6 +233,16 @@ test("Instantiable test requirement test") ->
       end}
      ];
 
+test("Multiple instantiable test requirement test") ->
+    [
+     {r, [?instantiate("Instantiable test"), ?instantiate({anothertest, "Instantiable"})]},
+     {f,
+      fun () ->
+	      ok
+      end}
+     ];
+
+
 
 test("Pass the node") ->
     [

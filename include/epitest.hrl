@@ -18,15 +18,18 @@
 
 -define(all_dependants(X,E), {'CORE', "All dependants", [?MODULE, X, E]}).
 
--define(instantiate(Tuple), 
-	case {{?FILE,?LINE}, Tuple} of
-	    {Instance,T} when is_list(T) ->
-		{T, [Instance]};
-	    {Instance, {M,T}} when is_atom(M) ->
-		{M,T,[Instance]};
-	    {Instance,{T,A}} ->
-		{T, A ++ [Instance]};
-	    {Instance,{M, T, A}} ->
-		{M, T, A ++ [Instance]}
-	end).
+-define(instantiate(Tuple0), 
+	apply(fun (Tuple) ->
+		      Instance = {?FILE,?LINE},
+		      case Tuple of
+			  T when is_list(T) ->
+			      {T, [Instance]};
+			  {M,T} when is_atom(M) ->
+			      {M,T,[Instance]};
+			  {T,A} ->
+			      {T, A ++ [Instance]};
+			  {M, T, A} ->
+			      {M, T, A ++ [Instance]}
+		      end
+	      end, [Tuple0])).
 
