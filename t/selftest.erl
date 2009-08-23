@@ -375,7 +375,24 @@ test({"Parametrized forward dependency", Param}) ->
 	      "val" = ?GET(var, State),
 	      "par1" = Param
       end}
-     ].
+     ];
+
+test("Pending test") ->
+    [{f,
+      fun() ->
+	      pending()
+      end}];
+test("Another pending test") ->
+    [{f,
+      fun() ->
+	     pending("Just another pending implementation (and it should be pending)")
+     end}];
+test("FPending test") ->
+    [{f, fpending()}];
+
+test("Another fpending test") ->
+    [{f,
+      fpending("Just another pending implementation (and it should be pending)")}].
       
 	      
       

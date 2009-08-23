@@ -108,6 +108,14 @@ running({success, _}, State) ->
     gen_fsm:send_event(self(), {success, {epitest_variables, []}}),
     {next_state, running, State};
 
+running({pending, Reason}, State) ->
+    Epistate0 = (State#state.epistate),
+    Epistate = Epistate0#epistate{ failure = {epitest_pending, Reason} },
+    gen_event:notify(epitest_log, {failure, Epistate}),
+    NotificationList = lists:flatten([epitest:dependants((State#state.epistate)#epistate.test, Label) || Label <- [ir,fr]]),
+    gen_server:cast(epitest_test_server, {notify, NotificationList, failed, Epistate, (State#state.epistate)#epistate.test}),
+    {next_state, failed, State#state{epistate=Epistate}};
+
 running({failure, Result}, State) ->
     Epistate0 = (State#state.epistate),
     Info = get_info(State),
@@ -285,6 +293,8 @@ report_result(Pid, Info, State, Result, true) ->
 	_ ->
 	    gen_fsm:send_event(Pid, {success, Result})
     end;
+report_result(Pid, _, _, {throw, {epitest_pending, Reason}}, false) ->
+    gen_fsm:send_event(Pid, {pending, Reason});
 report_result(Pid, _, _, Result, false) ->
     gen_fsm:send_event(Pid, {failure, Result}).
 

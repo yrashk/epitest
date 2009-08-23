@@ -59,6 +59,10 @@ handle_event({success, Epistate}, State) ->
     {M,T,A} = Epistate#epistate.test,
     io:format("\e[32m[PASSED] ~p:'~s'(~p)\e[0m~n", [M,T,A]),
     {ok, State};
+handle_event({failure, #epistate{failure={epitest_pending, Reason}}=Epistate}, State) ->
+    {M,T,A} = Epistate#epistate.test,
+    io:format("\e[33m[PENDING] ~p:'~s'(~p): ~p\e[0m~n", [M,T,A,Reason]),
+    {ok, State};
 handle_event({failure, Epistate}, State) ->
     {M,T,A} = Epistate#epistate.test,
     io:format("\e[31m[FAILED] ~p:'~s'(~p): ~p\e[0m~n", [M,T,A,Epistate#epistate.failure]),

@@ -70,6 +70,22 @@ handle_event({success, Epistate}, State) ->
 		     end, epitest:requires(Epistate#epistate.test)),
     Portion = Test ++ " [color=green];\n" ++ Deps ++ Reqs,
     {ok, State#state{ digraph = State#state.digraph ++ Portion}};
+handle_event({failure, #epistate{failure={epitest_pending, Reason}}=Epistate}, State) ->
+    {M,T,A} = Epistate#epistate.test,
+    Test = "\"" ++ escape(io_lib:format("~w:~s(~1000p)",[M,T,A])) ++ "\"",
+    Deps = lists:map(fun (D) ->
+			     {M1,T1,A1} = D,
+			     Test1 = "\"" ++ escape(io_lib:format("~w:~s(~1000p)",[M1,T1,A1])) ++ "\"",
+			     io_lib:format("~s -> ~s;~n",[Test, Test1])
+		     end, epitest:dependants(Epistate#epistate.test)),
+    Reqs = lists:map(fun (D) ->
+			     {M1,T1,A1} = D,
+			     Test1 = "\"" ++ escape(io_lib:format("~w:~s(~1000p)",[M1,T1,A1])) ++ "\"",
+			     io_lib:format("~s -> ~s;~n",[Test1, Test])
+		     end, epitest:requires(Epistate#epistate.test)),
+    Portion = Test ++ " [color=yellow];\n" ++ Deps ++ Reqs,
+    {ok, State#state{ digraph = State#state.digraph ++ Portion}};
+
 handle_event({failure, Epistate}, State) ->
     {M,T,A} = Epistate#epistate.test,
     Test = "\"" ++ escape(io_lib:format("~w:~s(~1000p)",[M,T,A])) ++ "\"",

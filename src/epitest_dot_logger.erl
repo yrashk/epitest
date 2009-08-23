@@ -56,6 +56,9 @@ handle_event({_, #epistate{test = {'CORE',_,_}}}, State) ->
 handle_event({success, _Epistate}, State) ->
     io:format("."),
     {ok, State};
+handle_event({failure, #epistate{failure={epitest_pending, _Reason}}=_Epistate}, State) ->
+    io:format("P"),
+    {ok, State};
 handle_event({failure, _Epistate}, State) ->
     io:format("F"),
     {ok, State};
