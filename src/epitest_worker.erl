@@ -279,6 +279,8 @@ do_run(Pid,Info,State) ->
 	    report_result(Pid, Info, State, {K,V}, N)
     end.
 
+report_result(Pid, _, _, {throw, {epitest_pending, Reason}}, _) ->
+    gen_fsm:send_event(Pid, {pending, Reason});
 report_result(Pid, Info, State, Result, true) ->
     Repeat = proplists:get_value(repeat, Info),
     case Repeat of
@@ -293,8 +295,6 @@ report_result(Pid, Info, State, Result, true) ->
 	_ ->
 	    gen_fsm:send_event(Pid, {success, Result})
     end;
-report_result(Pid, _, _, {throw, {epitest_pending, Reason}}, false) ->
-    gen_fsm:send_event(Pid, {pending, Reason});
 report_result(Pid, _, _, Result, false) ->
     gen_fsm:send_event(Pid, {failure, Result}).
 

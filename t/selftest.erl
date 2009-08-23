@@ -378,6 +378,13 @@ test({"Parametrized forward dependency", Param}) ->
       end}
      ];
 
+test("Negative pending test") ->
+    [negative,
+     {f,
+      fun() ->
+	      pending()
+      end}];
+
 test("Pending test") ->
     [{f,
       fun() ->
