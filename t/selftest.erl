@@ -263,6 +263,33 @@ test("Split node test") ->
 	      ?PASS([{splitted, node()},{"Split node test", yes}])
       end}];
 
+test("Node split") -> 
+    [
+     nodesplit,
+     skip, % it is only used by the next test "Split node instantiation test"
+     {f,
+      fun (State) ->
+	      ok
+      end}];
+
+test("Split node instantiation test") -> 
+    [
+     {r, [?instantiate("Node split")]},
+     {f,
+      fun (State) ->
+	      false = node() == ?GET(node, State),
+	      true = proplists:get_value(splitnode, State#epistate.options) == node()
+      end}];
+
+test("Split node instantiation instantiation test") -> % yeah, that is double instantiation
+    [
+     {r, [?instantiate("Split node instantiation test")]},
+     {f,
+      fun (State) ->
+	      false = node() == ?GET(node, State),
+	      true = proplists:get_value(splitnode, State#epistate.options) == node()
+      end}];
+
 test("Split node continuation test") -> 
     [
      {r, ["Split node test"]},
