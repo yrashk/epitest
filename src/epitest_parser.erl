@@ -56,10 +56,13 @@ forms([]) ->
 func(Line, Name, Arity, Clauses) ->
     {function, Line, Name, Arity, clauses(Clauses)}.
 
-clauses([{clause, L, [{string, _, _}] = H0,G,B}=C|Cs]) ->
-    H1 = [{tuple, L, [hd(H0), {var, L, '_Instance'}]}],
+clauses([{clause, L, [{string, _, _}] = H0,G,B}|Cs]) ->
+    H1 = [{tuple, L, [hd(H0), {var, L, '_EpitestInstanceUniqueInstanceIdentifier'}]}],
+    C0 = {clause, L, H0, G, [{match, L,
+			      {var, L, '_EpitestInstanceUniqueInstanceIdentifier'},
+			      {atom, L, main}} |B]},
     C1 = {clause, L, H1, G,B},
-    [C,C1|clauses(Cs)];
+    [C0,C1|clauses(Cs)];
 
 clauses([C|Cs]) ->
     [C|clauses(Cs)];
