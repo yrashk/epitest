@@ -12,7 +12,7 @@
 -export([init/1, handle_event/2, handle_call/2, 
 	 handle_info/2, terminate/2, code_change/3]).
 
--record(state, {}).
+-record(state, {passed=0, failed=0, pending=0, elapsed=0}).
 -define(SERVER, ?MODULE).
 
 %%====================================================================
@@ -58,16 +58,17 @@ handle_event({_, #epistate{test = {'CORE',_,_}}}, State) ->
 handle_event({success, Epistate}, State) ->
     {M,T,A} = Epistate#epistate.test,
     io:format("\e[32m[PASSED] \e[90m~-20w\e[32m (~fs) ~p:'~s'(~200p)\e[0m~n", [enode(Epistate),Epistate#epistate.elapsed/1000000,M,T,A]),
-    {ok, State};
+    {ok, State#state{elapsed = State#state.elapsed + Epistate#epistate.elapsed, passed=State#state.passed + 1} };
 handle_event({failure, #epistate{failure={epitest_pending, Reason}}=Epistate}, State) ->
     {M,T,A} = Epistate#epistate.test,
     io:format("\e[33m[PENDNG] \e[90m~-20w\e[33m (~fs) ~p:'~s'(~200p): ~200p\e[0m~n", [enode(Epistate),Epistate#epistate.elapsed/1000000,M,T,A,Reason]),
-    {ok, State};
+    {ok, State#state{elapsed = State#state.elapsed + Epistate#epistate.elapsed, pending=State#state.pending + 1} };
 handle_event({failure, Epistate}, State) ->
     {M,T,A} = Epistate#epistate.test,
     io:format("\e[31m[FAILED] \e[90m~-20w\e[31m (~fs) ~p:'~s'(~200p): ~200p\e[0m~n", [enode(Epistate),Epistate#epistate.elapsed/1000000,M,T,A,Epistate#epistate.failure]),
-    {ok, State};
+    {ok, State#state{elapsed = State#state.elapsed + Epistate#epistate.elapsed, failed=State#state.failed + 1} };
 handle_event(finished, State) ->
+    io:format("\e[32mPassed: ~w \e[31mFailed: ~w \e[33mPending: ~w\e[0m~nTotal time elapsed: ~fs~n",[State#state.passed, State#state.failed, State#state.pending, State#state.elapsed/1000000]),
     erlang:halt(),
     {ok, State};
 handle_event(_Event, State) ->
