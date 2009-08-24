@@ -22,7 +22,7 @@
 
 -define(instantiate(Tuple0), 
 	apply(fun (Tuple) ->
-		      Instance = {?FILE,?LINE, _EpitestInstanceUniqueInstanceIdentifier},
+		      Instance = {?MODULE,?LINE, _EpitestInstanceUniqueInstanceIdentifier},
 		      case Tuple of
 			  T when is_list(T) ->
 			      {T, [Instance]};
