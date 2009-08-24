@@ -268,7 +268,7 @@ test("Node split") ->
      nodesplit,
      skip, % it is only used by the next test "Split node instantiation test"
      {f,
-      fun (State) ->
+      fun () ->
 	      ok
       end}];
 

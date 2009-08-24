@@ -200,7 +200,7 @@ add_edge({_, Name}, Args0, D, Mod, Edge) when is_list(Name) -> % FIXME: this _ i
     Info = apply(Mod, test, [Name]),
     Deps = proplists:get_value(Edge, Info, []),
     lists:foreach(fun(Dep) -> add_dep(D,Dep, Mod, Name, Args0, Edge) end, Deps);
-add_edge({_, Name, Args}, Args0, D, Mod, Edge) when is_list(Name) -> % FIXME: this _ is not a right thing, probably?
+add_edge({_, Name, Args}, _Args0, D, Mod, Edge) when is_list(Name) -> % FIXME: this _ is not a right thing, probably?
     Info = apply(Mod, test, [list_to_tuple([Name|Args])]),
     Deps = proplists:get_value(Edge, Info, []),
     lists:foreach(fun(Dep) -> add_dep(D,Dep, Mod, Name, Args, Edge) end, Deps);
