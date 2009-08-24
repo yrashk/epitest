@@ -1,5 +1,5 @@
 -module(epitest_helpers).
--export([pending/0, pending/1, fpending/0, fpending/1, fail/0, fail/1]).
+-export([pending/0, pending/1, fpending/0, fpending/1, fail/0, fail/1, ok/0]).
 
 pending() ->
     pending("PENDING IMPLEMENTATION").
@@ -17,3 +17,8 @@ fail() ->
     fail(noreason).
 fail(Reason) ->
     erlang:raise(error, {failed, Reason}, []).
+
+ok() ->
+    fun () ->
+	    ok
+    end.

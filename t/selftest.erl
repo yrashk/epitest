@@ -2,23 +2,17 @@
 -include_lib("epitest/include/epitest.hrl").
 
 test("Simple test with no dependencies, no function") ->
-    [{f, fun() -> ok end}];
+    [{f, ok()}];
 
 test("Simple test with no dependencies") ->
     [
-     {f,
-      fun () ->
-	      ok
-      end}
+     {f, ok()}
     ];
 
 test("Simple test with a single r dependency") ->
     [
      {r, ["Simple test with no dependencies"]},
-     {f,
-      fun () ->
-	      ok
-      end}
+     {f, ok()}
     ];
 
 test("Simple test that fails") ->
@@ -52,10 +46,7 @@ test("Simple negative test") ->
 test("Simple negative test that fails") ->
     [{fmsg, "It should have failed, that's all right"},
      negative,
-     {f,
-      fun () ->
-	      ok
-      end}];
+     {f,ok()}];
 
 test("Simple test with a single r dependency that should never be reached") ->
     [
@@ -70,36 +61,25 @@ test("Simple test with a single fr dependency") ->
     [
      {fr, ["Simple test that fails"]},
      {f,
-      fun () ->
-	      ok
-      end}
+      ok()}
     ];
 
 test("Simple test with a single ir dependency") ->
     [
      {ir, ["Simple test that fails"]},
-     {f,
-      fun () ->
-	      ok
-      end}
+     {f,ok()}
     ];
 
 test("Another simple test with a single ir dependency") ->
     [
      {ir, ["Simple test with no dependencies, no function"]},
-     {f,
-      fun () ->
-	      ok
-      end}
+     {f,ok()}
     ];
 
 test("Simple test with a multiple r dependency") ->
     [
      {r, ["Simple test with no dependencies, no function","Simple test with no dependencies"]},
-     {f,
-      fun () ->
-	      ok
-      end}
+     {f,ok()}
     ];
 
     
@@ -127,10 +107,7 @@ test("Testing for different variables coming from multiple dependencies") ->
 test("Simple test with a multiple fr dependency") ->
     [
      {fr, ["Simple test that fails","Another simple test that fails"]},
-     {f,
-      fun () ->
-	      ok
-      end}
+     {f,ok()}
     ];
     
 
@@ -156,10 +133,7 @@ test("Another simple test with a multiple fr dependency that should never be rea
 test("Simple test with a multiple ir dependency") ->
     [
      {ir, ["Simple test that fails", "Simple test with no dependencies, no function","Simple test with no dependencies"]},
-     {f,
-      fun () ->
-	      ok
-      end}
+     {f,ok()}
     ];
 
 test("f/1") ->
@@ -218,28 +192,19 @@ test("Skipped test") ->
 test("Instantiable test") -> % makes use of skip!
     [
      skip,
-     {f,
-      fun () ->
-	      ok
-      end}
+     {f,ok()}
      ];
 
 test("Instantiable test requirement test") ->
     [
      {r, [?instantiate("Instantiable test")]},
-     {f,
-      fun () ->
-	      ok
-      end}
+     {f,ok()}
      ];
 
 test("Multiple instantiable test requirement test") ->
     [
      {r, [?instantiate("Instantiable test"), ?instantiate({anothertest, "Instantiable"})]},
-     {f,
-      fun () ->
-	      ok
-      end}
+     {f,ok()}
      ];
 
 
@@ -267,10 +232,7 @@ test("Node split") ->
     [
      nodesplit,
      skip, % it is only used by the next test "Split node instantiation test"
-     {f,
-      fun () ->
-	      ok
-      end}];
+     {f,ok()}];
 
 test("Split node instantiation test") -> 
     [
@@ -372,12 +334,12 @@ test("Repeat while test") -> % TODO: make a better test
      ];
 
 test("Another module's test dependency") ->
-    [{r,[{anothertest,"Just some test"}]},{f, fun() -> ok end}];
+    [{r,[{anothertest,"Just some test"}]},{f, ok()}];
 
 test("Another module's test dependency #2") ->
-    [{r,[{anothertest,"Just some test #2", []}]},{f, fun() -> ok end}];
+    [{r,[{anothertest,"Just some test #2", []}]},{f, ok()}];
 test("Another module's instantiable dependency") ->
-    [{r, [?instantiate({anothertest, "Instantiable"})]},{f, fun() -> ok end}];
+    [{r, [?instantiate({anothertest, "Instantiable"})]},{f, ok()}];
    
 test("Some test with forward dependencies") ->
     [{d, ["Some forward dependency",
