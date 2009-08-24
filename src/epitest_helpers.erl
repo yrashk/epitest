@@ -5,7 +5,7 @@ pending() ->
     pending("PENDING IMPLEMENTATION").
 
 pending(Reason) ->
-    erlang:raise(error, {epitest_pending, Reason},[]).
+    erlang:raise(error, {epitest_pending, Reason},erlang:get_stacktrace()).
 
 fpending() ->
     fun pending/0.
@@ -16,7 +16,7 @@ fpending(Reason) ->
 fail() ->
     fail(noreason).
 fail(Reason) ->
-    erlang:raise(error, {failed, Reason}, []).
+    erlang:raise(error, {failed, Reason},erlang:get_stacktrace()).
 
 ok() ->
     fun () ->
