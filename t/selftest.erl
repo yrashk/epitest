@@ -405,6 +405,21 @@ test({"Parametrized forward dependency", Param}) ->
       end}
      ];
 
+test({"Parametrized test", Param}) ->
+    [{f,
+      fun () ->
+	      ?PASS([{param, Param}])
+      end}
+     ];
+
+test("Parametrized test instantiation") ->
+    [{r, [?instantiate({"Parametrized test",["Param"]})]},
+     {f,
+      fun (State) ->
+	      "Param" = ?GET(param, State)
+      end}
+     ];
+
 test("Negative pending test") ->
     [negative,
      {f,
