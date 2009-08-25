@@ -284,6 +284,16 @@ test("Negative split node test") ->
       end}];
 
 
+test("Named split node test") ->
+    [
+     {nodesplit, [{name, "named"}]},
+     {f,
+      fun () ->
+	      {ok, Host} = inet:gethostname(),
+	      Node = list_to_atom("named@" ++ Host),
+	      Node = node()
+      end}];
+
 test("Split node with arguments test") -> 
     [
      {nodesplit, [{args,"-kernel testflag yes"}]},

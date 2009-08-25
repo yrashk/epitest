@@ -89,7 +89,12 @@ ready(run, State) ->
 		     {ok, Node} = epitest_slave:start_link(),
 		     State#state{ epistate = Epistate0#epistate{ options = lists:keystore(splitnode, 1, Epistate0#epistate.options, proplists:property(splitnode, Node))}};
 		 L when is_list(L) ->
-		     {ok, Node} = epitest_slave:start_link(proplists:get_value(args, L, [])),
+		     {ok, Node} = case proplists:get_value(name, L) of
+				      undefined ->
+					  epitest_slave:start_link(proplists:get_value(args, L, []));
+				      Nodename ->
+					  epitest_slave:start_link(Nodename, proplists:get_value(args, L, []))
+				  end,
 		     State#state{ epistate = Epistate0#epistate{ options = lists:keystore(splitnode, 1, Epistate0#epistate.options, proplists:property(splitnode, Node))}};
 		 false ->
 		     State
