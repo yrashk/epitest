@@ -277,15 +277,15 @@ do_run(Pid,Info,State) ->
 	      end,
     {Timer, Result} = timer:tc(erlang,apply,[Functor,[]]),
     case Result of
-	{badrpc, {'EXIT', {Err,_}}} ->
-	    report_result(Pid, Info, State#state{epistate=Epistate#epistate{elapsed=Timer}}, Err, N);
-	{'EXIT',{Err,_}} ->
-	    report_result(Pid, Info, State, Err, N);
+	{badrpc, {'EXIT', {Err,Trace}}} ->
+	    report_result(Pid, Info, State#state{epistate=Epistate#epistate{elapsed=Timer}}, {Err, Trace}, N);
+	{'EXIT',{Err,Trace}} ->
+	    report_result(Pid, Info, State, {Err, Trace}, N);
 	_ ->
 	    report_result(Pid, Info, State#state{epistate=Epistate#epistate{elapsed=Timer}}, Result, true and not N)
     end.
 
-report_result(Pid, _, State, {epitest_pending, Reason}, _) ->
+report_result(Pid, _, State, {{epitest_pending, Reason},_}, _) ->
     gen_fsm:send_event(Pid, {pending, Reason, State});
 report_result(Pid, Info, State, Result, true) ->
     Repeat = proplists:get_value(repeat, Info),
