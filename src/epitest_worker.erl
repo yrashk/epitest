@@ -270,7 +270,7 @@ do_run(Pid,Info,State) ->
     Functor = fun () ->
 		      case Nodesplit of
 			  true ->
-			      rpc:block_call(proplists:get_value(splitnode, Opts), erlang, apply, [F,Args]);
+			      epitest_slave:block_call(proplists:get_value(splitnode, Opts), erlang, apply, [F,Args]);
 			  _ ->
 			      apply(F,Args)
 		      end
@@ -283,9 +283,9 @@ do_run(Pid,Info,State) ->
 		file:make_dir(""), % ensure directory exists
 		self();
 	    true ->
-		_SlaveRedirectionPid = rpc:block_call(proplists:get_value(splitnode, Opts), erlang, apply, [fun () -> self() end,[]]),
+		_SlaveRedirectionPid = epitest_slave:block_call(proplists:get_value(splitnode, Opts), erlang, apply, [fun () -> self() end,[]]),
 		epitest_file_server:redirect(_SlaveRedirectionPid, Cwd ++ "/" ++ uniq()), 
-		rpc:block_call(proplists:get_value(splitnode, Opts), file, make_dir, [""]), % ensure directory exists
+		epitest_slave:block_call(proplists:get_value(splitnode, Opts), file, make_dir, [""]), % ensure directory exists
 		_SlaveRedirectionPid
     end,
     {Timer, Result} = timer:tc(erlang,apply,[Functor,[]]),
