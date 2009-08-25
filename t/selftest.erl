@@ -286,7 +286,7 @@ test("Negative split node test") ->
 
 test("Named split node test") ->
     [
-     {nodesplit, [{name, "named"}]},
+     {nodesplit, [{name, named}]},
      {f,
       fun () ->
 	      {ok, Host} = inet:gethostname(),
