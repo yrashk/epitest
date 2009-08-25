@@ -294,6 +294,17 @@ test("Named split node test") ->
 	      Node = node()
       end}];
 
+
+test("Getting a list of splitnodes") ->
+    [
+     {r,["Named split node test"]},
+     {f,
+      fun (State) ->
+	      {ok, Host} = inet:gethostname(),
+	      Node = list_to_atom("named@" ++ Host),
+	      [Node] = splitnodes(State)
+      end}];
+
 test("Split node with arguments test") -> 
     [
      {nodesplit, [{args,"-kernel testflag yes"}]},

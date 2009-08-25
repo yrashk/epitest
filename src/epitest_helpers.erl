@@ -24,12 +24,15 @@ ok() ->
     end.
 
 splitnodes(State) ->
-    lists:filter(fun (Opt) ->
-			 case Opt of
-			     {splitnode, _} ->
-				 true;
-			     _ ->
-				 false
-			 end
-		 end,			 
-		 element(3, State)).
+    lists:map(fun ({splitnode, Node}) ->
+		      Node
+	      end,
+	      lists:filter(fun (Opt) ->
+				   case Opt of
+				       {splitnode, _} ->
+					   true;
+				       _ ->
+					   false
+				   end
+			   end,			 
+			   element(3, State))).
