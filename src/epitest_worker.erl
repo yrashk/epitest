@@ -270,27 +270,26 @@ do_run(Pid,Info,State) ->
     Functor = fun () ->
 		      case Nodesplit of
 			  true ->
-			      rpc:call(proplists:get_value(splitnode, Opts), erlang, apply, [F,Args]);
+			      rpc:block_call(proplists:get_value(splitnode, Opts), erlang, apply, [F,Args]);
 			  _ ->
 			      apply(F,Args)
 		      end
 	      end,
     {ok, Cwd} = file:get_cwd(),
-    case Nodesplit of 
-	false ->
-	    epitest_file_server:redirect(self(), Cwd ++ "/" ++ uniq()), 
-	    file:make_dir(""); % ensure directory exists
-	true ->
-	    epitest_file_server:redirect(rpc:call(proplists:get_value(splitnode, Opts), erlang, whereis, [file_server_2]), Cwd ++ "/" ++ uniq()), 
-	    rpc:call(proplists:get_value(splitnode, Opts), file, make_dir, [""]) % ensure directory exists
+    RedirectionPid = 
+	case Nodesplit of 
+	    false ->
+		epitest_file_server:redirect(self(), Cwd ++ "/" ++ uniq()), 
+		file:make_dir(""), % ensure directory exists
+		self();
+	    true ->
+		_SlaveRedirectionPid = rpc:block_call(proplists:get_value(splitnode, Opts), erlang, apply, [fun () -> self() end,[]]),
+		epitest_file_server:redirect(_SlaveRedirectionPid, Cwd ++ "/" ++ uniq()), 
+		rpc:block_call(proplists:get_value(splitnode, Opts), file, make_dir, [""]), % ensure directory exists
+		_SlaveRedirectionPid
     end,
     {Timer, Result} = timer:tc(erlang,apply,[Functor,[]]),
-    case Nodesplit of 
-	false ->
-	    epitest_file_server:cancel_redirection(self());
-	true ->
-	    epitest_file_server:cancel_redirection(rpc:call(proplists:get_value(splitnode, Opts), erlang, whereis, [file_server_2]))
-    end,
+    epitest_file_server:cancel_redirection(RedirectionPid),
     case Result of
 	{badrpc, {'EXIT', {Err,Trace}}} ->
 	    report_result(Pid, Info, State#state{epistate=Epistate#epistate{elapsed=Timer}}, {Err, Trace}, N);
