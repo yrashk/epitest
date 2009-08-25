@@ -1,7 +1,7 @@
 -ifndef(EPITEST_NOTRANSFORM).
 -compile({parse_transform, epitest_parser}).
 -export([test/1, tests/0]).
--import(epitest_helpers, [pending/0,pending/1,fpending/0,fpending/1,fail/0,fail/1,ok/0]).
+-import(epitest_helpers, [pending/0,pending/1,fpending/0,fpending/1,fail/0,fail/1,ok/0,splitnodes/1]).
 -endif.
 
  

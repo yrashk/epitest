@@ -1,5 +1,5 @@
 -module(epitest_helpers).
--export([pending/0, pending/1, fpending/0, fpending/1, fail/0, fail/1, ok/0]).
+-export([pending/0, pending/1, fpending/0, fpending/1, fail/0, fail/1, ok/0,splitnodes/1]).
 
 pending() ->
     pending("PENDING IMPLEMENTATION").
@@ -22,3 +22,14 @@ ok() ->
     fun () ->
 	    ok
     end.
+
+splitnodes(Stat) ->
+    lists:filter(fun (Opt) ->
+			 case Opt of
+			     {splitnode, _} ->
+				 true;
+			     _ ->
+				 false
+			 end
+		 end,			 
+		 State#epistate.options).
