@@ -32,4 +32,4 @@ splitnodes(State) ->
 				 false
 			 end
 		 end,			 
-		 element(2, State)).
+		 element(3, State)).
