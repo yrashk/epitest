@@ -23,7 +23,7 @@ ok() ->
 	    ok
     end.
 
-splitnodes(Stat) ->
+splitnodes(State) ->
     lists:filter(fun (Opt) ->
 			 case Opt of
 			     {splitnode, _} ->
@@ -32,4 +32,4 @@ splitnodes(Stat) ->
 				 false
 			 end
 		 end,			 
-		 State#epistate.options).
+		 element(2, State)).

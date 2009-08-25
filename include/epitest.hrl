@@ -8,7 +8,7 @@
 -define(PASS(X), {epitest_variables, X}).
 -define(GET(X, State), proplists:get_value(X, State#epistate.variables)).
 
--record(epistate,
+-record(epistate, % if epistate changes, make sure epitest_helpers:splitnodes/1 is updated
 	{
 	  test,
 	  options = [],
