@@ -275,7 +275,22 @@ do_run(Pid,Info,State) ->
 			      apply(F,Args)
 		      end
 	      end,
+    {ok, Cwd} = file:get_cwd(),
+    case Nodesplit of 
+	false ->
+	    epitest_file_server:redirect(self(), Cwd ++ "/" ++ uniq()), 
+	    file:make_dir(""); % ensure directory exists
+	true ->
+	    epitest_file_server:redirect(rpc:call(proplists:get_value(splitnode, Opts), erlang, whereis, [file_server_2]), Cwd ++ "/" ++ uniq()), 
+	    rpc:call(proplists:get_value(splitnode, Opts), file, make_dir, [""]) % ensure directory exists
+    end,
     {Timer, Result} = timer:tc(erlang,apply,[Functor,[]]),
+    case Nodesplit of 
+	false ->
+	    epitest_file_server:cancel_redirection(self());
+	true ->
+	    epitest_file_server:cancel_redirection(rpc:call(proplists:get_value(splitnode, Opts), erlang, whereis, [file_server_2]))
+    end,
     case Result of
 	{badrpc, {'EXIT', {Err,Trace}}} ->
 	    report_result(Pid, Info, State#state{epistate=Epistate#epistate{elapsed=Timer}}, {Err, Trace}, N);
@@ -329,6 +344,9 @@ merge(State, Epistate1) ->
     NewVars = Epistate1#epistate.variables ++ Epistate0#epistate.variables,
     Epistate0#epistate{ options = NewOpts, variables = NewVars }.
 
+uniq() -> % TODO: rename it
+    <<I:128/integer>> = erlang:md5(term_to_binary({now(),node()})),
+    erlang:integer_to_list(I).
 %%--------------------------------------------------------------------
 %%% Public functions
 %%--------------------------------------------------------------------

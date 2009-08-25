@@ -4,6 +4,9 @@
 
 -export([start_link/0]).
 
+
+-export([redirect/2, cancel_redirection/1]).
+
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, 
 	 terminate/2, code_change/3]).
@@ -14,9 +17,9 @@ start_link() ->
     FileServerPid = whereis(?SERVER),
     unregister(?SERVER),
     register(original_file_server, FileServerPid),
-    gen_server:start({local,?SERVER}, ?MODULE, [FileServerPid], []).
+    gen_server:start({local,?SERVER}, ?MODULE, [], []).
 
--record(state, { file_server }).
+-record(state, { redirections }).
 
 %%%----------------------------------------------------------------------
 %%% Callback functions from gen_server
@@ -29,8 +32,8 @@ start_link() ->
 %%          ignore               |
 %%          {stop, Reason}
 %%----------------------------------------------------------------------
-init([FileServerPid]) ->
-    {ok, #state{ file_server = FileServerPid }}.
+init([]) ->
+    {ok, #state{ redirections = dict:new() }}.
 
 %%----------------------------------------------------------------------
 %% Func: handle_call/3
@@ -41,72 +44,78 @@ init([FileServerPid]) ->
 %%          {stop, Reason, Reply, State}   | (terminate/2 is called)
 %%          {stop, Reason, State}            (terminate/2 is called)
 %%----------------------------------------------------------------------
-handle_call({open, Name, ModeList}, _From, #state{ file_server = Server} = State)  ->
-    {reply, gen_server:call(Server, {open, transform_name(Name), ModeList} ),  State};
+handle_call({redirect, Source, Prefix},  {_Pid, _Tag} = _From, #state{ redirections = Redirections} = State) ->
+    {reply, ok, State#state{ redirections = dict:store(Source, Prefix, Redirections) }};
 
-handle_call({read_file, Name}, _From, #state{ file_server = Server} = State) ->
-    {reply, gen_server:call(Server, {read_file, transform_name(Name)}), State};
+handle_call({cancel_redirection, Source},  {_Pid, _Tag} = _From, #state{ redirections = Redirections} = State) ->
+    {reply, ok, State#state{ redirections = dict:erase(Source, Redirections) }};
+    
+handle_call({open, Name, ModeList}, {Pid, _Tag} = _From, #state{ redirections = Redirections} = State)  ->
+    {reply, gen_server:call(original_file_server, {open, redirected_name(Name,Redirections,Pid), ModeList} ),  State};
 
-handle_call({write_file, Name, Bin}, _From, #state{ file_server = Server} = State) ->
-    {reply, gen_server:call(Server, {write_file, transform_name(Name), Bin}), State};
+handle_call({read_file, Name}, {Pid, _Tag} = _From, #state{ redirections = Redirections} = State) ->
+    {reply, gen_server:call(original_file_server, {read_file, redirected_name(Name,Redirections,Pid)}), State};
 
-handle_call({set_cwd, Name}, _From, #state{ file_server = Server} = State) ->
-    {reply, gen_server:call(Server, {set_cwd, transform_name(Name)}), State};
+handle_call({write_file, Name, Bin}, {Pid, _Tag} = _From, #state{ redirections = Redirections} = State) ->
+    {reply, gen_server:call(original_file_server, {write_file, redirected_name(Name,Redirections,Pid), Bin}), State};
 
-handle_call({delete, Name}, _From, #state{ file_server = Server} = State) ->
-    {reply, gen_server:call(Server, {delete, transform_name(Name)}), State};
+handle_call({set_cwd, Name}, {Pid, _Tag} = _From, #state{ redirections = Redirections} = State) ->
+    {reply, gen_server:call(original_file_server, {set_cwd, redirected_name(Name,Redirections,Pid)}), State};
 
-handle_call({rename, Fr, To}, _From, #state{ file_server = Server} = State) ->
-    {reply, gen_server:call(Server, {rename, transform_name(Fr), transform_name(To)}), State};
+handle_call({delete, Name}, {Pid, _Tag} = _From, #state{ redirections = Redirections} = State) ->
+    {reply, gen_server:call(original_file_server, {delete, redirected_name(Name,Redirections,Pid)}), State};
 
-handle_call({make_dir, Name}, _From, #state{ file_server = Server} = State) ->
-    {reply, gen_server:call(Server, {make_dir, transform_name(Name)}), State};
+handle_call({rename, Fr, To}, {Pid, _Tag} = _From, #state{ redirections = Redirections} = State) ->
+    {reply, gen_server:call(original_file_server, {rename, redirected_name(Fr,Redirections,Pid), redirected_name(To,Redirections,Pid)}), State};
 
-handle_call({del_dir, Name}, _From, #state{ file_server = Server} = State) ->
-    {reply, gen_server:call(Server, {del_dir, transform_name(Name)}), State};
+handle_call({make_dir, Name}, {Pid, _Tag} = _From, #state{ redirections = Redirections} = State) ->
+    {reply, gen_server:call(original_file_server, {make_dir, redirected_name(Name,Redirections,Pid)}), State};
 
-handle_call({list_dir, Name}, _From, #state{ file_server = Server} = State) ->
-    {reply, gen_server:call(Server, {list_dir, transform_name(Name)}), State};
+handle_call({del_dir, Name}, {Pid, _Tag} = _From, #state{ redirections = Redirections} = State) ->
+    {reply, gen_server:call(original_file_server, {del_dir, redirected_name(Name,Redirections,Pid)}), State};
 
-handle_call(get_cwd, _From, #state{ file_server = Server} = State) ->
-    {reply, gen_server:call(Server, get_cwd), State};
+handle_call({list_dir, Name}, {Pid, _Tag} = _From, #state{ redirections = Redirections} = State) ->
+    {reply, gen_server:call(original_file_server, {list_dir, redirected_name(Name,Redirections,Pid)}), State};
 
-handle_call({get_cwd}, _From, #state{ file_server = Server} = State) ->
-    {reply, gen_server:call(Server, {get_cwd}), State};
+handle_call(get_cwd, {_Pid, _Tag} = _From, #state{ redirections = _Redirections} = State) ->
+    {reply, gen_server:call(original_file_server, get_cwd), State};
 
-handle_call({get_cwd, Name}, _From, #state{ file_server = Server} = State) ->
-    {reply, gen_server:call(Server, {get_cwd, transform_name(Name)}), State};
+handle_call({get_cwd}, {_Pid, _Tag} = _From, #state{ redirections = _Redirections} = State) ->
+    {reply, gen_server:call(original_file_server, {get_cwd}), State};
 
-handle_call({read_file_info, Name}, _From, #state{ file_server = Server} = State) ->
-    {reply, gen_server:call(Server, {read_file_info, transform_name(Name)}), State};
+handle_call({get_cwd, Name}, {Pid, _Tag} = _From, #state{ redirections = Redirections} = State) ->
+    {reply, gen_server:call(original_file_server, {get_cwd, redirected_name(Name,Redirections,Pid)}), State};
 
-handle_call({altname, Name}, _From, #state{ file_server = Server} = State) ->
-    {reply, gen_server:call(Server, {altname, transform_name(Name)}), State};
+handle_call({read_file_info, Name}, {Pid, _Tag} = _From, #state{ redirections = Redirections} = State) ->
+    {reply, gen_server:call(original_file_server, {read_file_info, redirected_name(Name,Redirections,Pid)}), State};
 
-handle_call({write_file_info, Name, Info}, _From, #state{ file_server = Server} = State) ->
-    {reply, gen_server:call(Server, {write_file_info, transform_name(Name), Info}), State};
+handle_call({altname, Name}, {Pid, _Tag} = _From, #state{ redirections = Redirections} = State) ->
+    {reply, gen_server:call(original_file_server, {altname, redirected_name(Name,Redirections,Pid)}), State};
 
-handle_call({read_link_info, Name}, _From, #state{ file_server = Server} = State) ->
-    {reply, gen_server:call(Server, {read_link_info, transform_name(Name)}), State};
+handle_call({write_file_info, Name, Info}, {Pid, _Tag} = _From, #state{ redirections = Redirections} = State) ->
+    {reply, gen_server:call(original_file_server, {write_file_info, redirected_name(Name,Redirections,Pid), Info}), State};
 
-handle_call({read_link, Name}, _From, #state{ file_server = Server} = State) ->
-    {reply, gen_server:call(Server, {read_link, transform_name(Name)}), State};
+handle_call({read_link_info, Name}, {Pid, _Tag} = _From, #state{ redirections = Redirections} = State) ->
+    {reply, gen_server:call(original_file_server, {read_link_info, redirected_name(Name,Redirections,Pid)}), State};
 
-handle_call({make_link, Old, New}, _From, #state{ file_server = Server} = State) ->
-    {reply, gen_server:call(Server, {make_link, transform_name(Old), transform_name(New)}), State};
+handle_call({read_link, Name}, {Pid, _Tag} = _From, #state{ redirections = Redirections} = State) ->
+    {reply, gen_server:call(original_file_server, {read_link, redirected_name(Name,Redirections,Pid)}), State};
 
-handle_call({make_symlink, Old, New}, _From, #state{ file_server = Server} = State) ->
-    {reply, gen_server:call(Server, {make_symlink, transform_name(Old), transform_name(New)}), State};
+handle_call({make_link, Old, New}, {Pid, _Tag} = _From, #state{ redirections = Redirections} = State) ->
+    {reply, gen_server:call(original_file_server, {make_link, redirected_name(Old,Redirections,Pid), redirected_name(New,Redirections,Pid)}), State};
+
+handle_call({make_symlink, Old, New}, {Pid, _Tag} = _From, #state{ redirections = Redirections} = State) ->
+    {reply, gen_server:call(original_file_server, {make_symlink, redirected_name(Old,Redirections,Pid), redirected_name(New,Redirections,Pid)}), State};
 
 handle_call({copy, SourceName, SourceOpts, DestName, DestOpts, Length},
-	    _From, #state{ file_server = Server} = State) ->
-    {reply, gen_server:call(Server, {copy, transform_name(SourceName), SourceOpts, transform_name(DestName), DestOpts, Length}), State};
+	    {Pid, _Tag} = _From, #state{ redirections = Redirections} = State) ->
+    {reply, gen_server:call(original_file_server, {copy, redirected_name(SourceName,Redirections,Pid), SourceOpts, redirected_name(DestName,Redirections,Pid), DestOpts, Length}), State};
 
-handle_call(stop, _From, #state{ file_server = Server} = State) ->
-    gen_server:call(Server, stop),
+handle_call(stop, {_Pid, _Tag} = _From, #state{ redirections = _Redirections} = State) ->
+    gen_server:call(original_file_server, stop),
     {stop, normal, stopped, State};
 
-handle_call(Request, From, #state{ file_server = _Server} = State) ->
+handle_call(Request, From, State) ->
     error_logger:error_msg("handle_call(~p, ~p, _)", [Request, From]),
     {noreply, State}.
 
@@ -127,8 +136,8 @@ handle_cast(Msg, State) ->
 %%          {stop, Reason, State}            (terminate/2 is called)
 %%----------------------------------------------------------------------
 
-handle_info(Info, #state{ file_server = Server } = State) ->
-    Server ! Info,
+handle_info(Info, State) ->
+    original_file_server ! Info,
     {noreply, State}.
 
 %%----------------------------------------------------------------------
@@ -150,5 +159,20 @@ code_change(_OldVsn, State, _Extra) ->
 %%%----------------------------------------------------------------------
 %%% Internal functions
 %%%----------------------------------------------------------------------
-transform_name(Name) ->
-    Name.
+redirected_name([$/|_]=Name, _Redirections, _Pid) ->
+    Name;
+redirected_name(Name, Redirections, Pid) ->
+    case dict:is_key(Pid, Redirections) of
+	true ->
+	    dict:fetch(Pid, Redirections) ++ "/" ++ Name;
+	false ->
+	    Name
+    end.
+
+%%%----------------------------------------------------------------------
+%%% Public functions
+%%%----------------------------------------------------------------------
+redirect(Source, Prefix) ->
+    gen_server:call(?SERVER, {redirect, Source, Prefix}).
+cancel_redirection(Source) ->
+    gen_server:call(?SERVER, {cancel_redirection, Source}).
