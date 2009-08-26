@@ -4,7 +4,6 @@
 -behaviour(gen_server).
 
 -define(SERVER, ?MODULE).
--define(REXNAME, epitest_slave_rex).
 
 -record(state, { counter = 0 }).
 
@@ -57,7 +56,6 @@ start_link(Nodename, Args) ->
     Paths = get_path(),
     {ok, Node} = slave:start_link(list_to_atom(Host), Nodename, Args),
     ok = rpc:call(Node, code, add_paths, [Paths]),
-    {ok, _} = rpc:call(Node, gen_server, start, [{local,?REXNAME},rpc,[],[]]),
     {ok, Node}.
 
 generate_nodename() ->
@@ -74,20 +72,27 @@ block_call(N,M,F,A,Timeout) when is_integer(Timeout), Timeout >= 0 ->
     do_call(N, {block_call,M,F,A,group_leader()}, Timeout).
 
 do_call(Node, Request, infinity) ->
-    rpc_check(catch gen_server:call({?REXNAME,Node}, Request, infinity));
+    {ok, Pid} = rpc:call(Node, gen_server, start, [rpc,[],[]]),
+    Result = rpc_check(catch gen_server:call(Pid, Request, infinity)),
+    gen_server:call(Pid, stop, infinity),
+    Result;
+
 do_call(Node, Request, Timeout) ->
     Tag = make_ref(),
+    {ok, Pid} = rpc:call(Node, gen_server, start, [rpc,[],[]]),
     {Receiver,Mref} =
 	erlang:spawn_monitor(
 	  fun() ->
 		  process_flag(trap_exit, true),
-		  Result = gen_server:call({?REXNAME,Node}, Request, Timeout),
+		  Result = gen_server:call(Pid, Request, Timeout),
 		  exit({self(),Tag,Result})
 	  end),
     receive
 	{'DOWN',Mref,_,_,{Receiver,Tag,Result}} ->
+	    gen_server:call(Pid, stop, infinity),
 	    rpc_check(Result);
 	{'DOWN',Mref,_,_,Reason} ->
+	    gen_server:call(Pid, stop, infinity),
 	    rpc_check_t({'EXIT',Reason})
     end.
 rpc_check_t({'EXIT', {timeout,_}}) -> {badrpc, timeout};
