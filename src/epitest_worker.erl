@@ -277,15 +277,16 @@ do_run(Pid,Info,State) ->
     N = proplists:get_value(negative, Info, false),
     Nodesplit = proplists:get_value(splitnode, Opts) =/= undefined,
     Functor = fun () ->
+		      {ok, TRef} = timer:kill_after(milliseconds(Timetrap)),
+		      Result = 
 		      case Nodesplit of
 			  true ->
-			      epitest_slave:block_call(proplists:get_value(splitnode, Opts), erlang, apply, [F,Args],milliseconds(Timetrap));
+			      epitest_slave:block_call(proplists:get_value(splitnode, Opts), erlang, apply, [F,Args]);
 			  _ ->
-			      {ok, TRef} = timer:kill_after(milliseconds(Timetrap)),
-			      Result = apply(F,Args),
-			      timer:cancel(TRef),
-			      Result
-		      end
+			      apply(F,Args)
+		      end,
+		      timer:cancel(TRef),
+		      Result
 	      end,
     {ok, Cwd} = file:get_cwd(),
     RedirectionPid = 
@@ -303,8 +304,6 @@ do_run(Pid,Info,State) ->
     {Timer, Result} = timer:tc(erlang,apply,[Functor,[]]),
     epitest_file_server:cancel_redirection(RedirectionPid),
     case Result of
-	{badrpc, timeout} ->
-	    report_result(Pid, Info, State#state{epistate=Epistate#epistate{elapsed=milliseconds(Timetrap)}}, timetrapped, N);
 	{badrpc, {'EXIT', {Err,Trace}}} ->
 	    report_result(Pid, Info, State#state{epistate=Epistate#epistate{elapsed=Timer}}, {Err, Trace}, N);
 	{'EXIT',{Err,Trace}} ->
