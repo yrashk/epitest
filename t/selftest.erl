@@ -430,5 +430,32 @@ test("When no f specified, it should be pending (yellow)") ->
     [];
 
 test("Nodesplit pending test, should be pending (yellow)") ->	      
-    [nodesplit].
-      
+    [nodesplit];
+
+test("Timetrap test") ->
+    [{timetrap, {seconds, 1}},
+     negative,
+     {f, fun () ->
+		 timer:sleep(2000)
+	 end}];
+
+test("Timetrap avoidance test") ->
+    [{timetrap, {seconds, 2}},
+     {f, fun () ->
+		 timer:sleep(1000)
+	 end}];
+
+test("Splitnode's timetrap test") ->
+    [nodesplit,
+     negative,
+     {timetrap, {seconds, 1}},
+     {f, fun () ->
+		 timer:sleep(2000)
+	 end}];
+
+test("Splitnode's timetrap avoidance test") ->
+    [nodesplit,
+     {timetrap, {seconds, 2}},
+     {f, fun () ->
+		 timer:sleep(1000)
+	 end}].

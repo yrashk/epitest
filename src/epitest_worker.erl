@@ -99,7 +99,8 @@ ready(run, State) ->
 		 false ->
 		     State
 	     end,
-    spawn(fun () -> do_run(Pid,Info, State1) end),
+    RunnerPid = spawn(fun () -> do_run(Pid,Info, State1) end),
+    erlang:monitor(process, RunnerPid),
     {next_state, running, State1}.
 
 running({success, {epitest_variables, Vars}, State}, _State0) ->
@@ -229,6 +230,13 @@ handle_sync_event(_Event, _From, StateName, State) ->
 %% other message than a synchronous or asynchronous event
 %% (or a system message).
 %%--------------------------------------------------------------------
+handle_info({'DOWN',_Ref,process,_Pid,killed}, running, State) ->
+    Epistate = State#state.epistate,
+    Info = get_info(State),
+    Timetrap = proplists:get_value(timetrap, Info, {minutes, 1}), % that's kind of default timetrap
+    N = proplists:get_value(negative, Info, false),
+    report_result(self(), Info, State#state{epistate=Epistate#epistate{elapsed=milliseconds(Timetrap)}}, timetrapped, N),
+    {next_state, running, State};
 handle_info(_Info, StateName, State) ->
     {next_state, StateName, State}.
 
@@ -265,14 +273,18 @@ do_run(Pid,Info,State) ->
 	       true ->
 		   throw("'f' fun can be either /0 or /1")
 	   end,
+    Timetrap = proplists:get_value(timetrap, Info, {minutes, 1}), % that's kind of default timetrap
     N = proplists:get_value(negative, Info, false),
     Nodesplit = proplists:get_value(splitnode, Opts) =/= undefined,
     Functor = fun () ->
 		      case Nodesplit of
 			  true ->
-			      epitest_slave:block_call(proplists:get_value(splitnode, Opts), erlang, apply, [F,Args]);
+			      epitest_slave:block_call(proplists:get_value(splitnode, Opts), erlang, apply, [F,Args],milliseconds(Timetrap));
 			  _ ->
-			      apply(F,Args)
+			      {ok, TRef} = timer:kill_after(milliseconds(Timetrap)),
+			      Result = apply(F,Args),
+			      timer:cancel(TRef),
+			      Result
 		      end
 	      end,
     {ok, Cwd} = file:get_cwd(),
@@ -291,6 +303,8 @@ do_run(Pid,Info,State) ->
     {Timer, Result} = timer:tc(erlang,apply,[Functor,[]]),
     epitest_file_server:cancel_redirection(RedirectionPid),
     case Result of
+	{badrpc, timeout} ->
+	    report_result(Pid, Info, State#state{epistate=Epistate#epistate{elapsed=milliseconds(Timetrap)}}, timetrapped, N);
 	{badrpc, {'EXIT', {Err,Trace}}} ->
 	    report_result(Pid, Info, State#state{epistate=Epistate#epistate{elapsed=Timer}}, {Err, Trace}, N);
 	{'EXIT',{Err,Trace}} ->
@@ -346,6 +360,20 @@ merge(State, Epistate1) ->
 uniq() -> % TODO: rename it
     <<I:128/integer>> = erlang:md5(term_to_binary({now(),node()})),
     erlang:integer_to_list(I).
+
+milliseconds({days, N}) ->
+    N*1000*60*60*24;
+milliseconds({hours, N}) ->
+    N*1000*60*60;
+milliseconds({minutes, N}) ->
+    N*1000*60;
+milliseconds({seconds, N}) ->
+    N*1000;
+milliseconds({milliseconds, N}) ->
+    N;
+milliseconds(infinity) ->
+    infinity.
+
 %%--------------------------------------------------------------------
 %%% Public functions
 %%--------------------------------------------------------------------
