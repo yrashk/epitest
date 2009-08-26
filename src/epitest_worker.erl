@@ -235,7 +235,7 @@ handle_info({'DOWN',_Ref,process,_Pid,killed}, running, State) ->
     Info = get_info(State),
     Timetrap = proplists:get_value(timetrap, Info, {minutes, 1}), % that's kind of default timetrap
     N = proplists:get_value(negative, Info, false),
-    report_result(self(), Info, State#state{epistate=Epistate#epistate{elapsed=milliseconds(Timetrap)}}, timetrapped, N),
+    report_result(self(), Info, State#state{epistate=Epistate#epistate{elapsed=milliseconds(Timetrap)}}, {timetrapped, Timetrap}, N),
     {next_state, running, State};
 handle_info(_Info, StateName, State) ->
     {next_state, StateName, State}.
