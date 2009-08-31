@@ -35,3 +35,5 @@
 		      end
 	      end, [Tuple0])).
 
+-define(EOT, test("EOT") ->
+	        [skip]).
