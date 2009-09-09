@@ -12,7 +12,7 @@ compile:
 
 test: all
 	@mkdir -p _tests
-	@erl -noshell -epitest dir \"_tests\" -sname epitest -pa t ebin -s epitest -s epitest modules selftest -s epitest_console_logger -s epitest run 
+	@time erl $(OPTS) -noshell -epitest dir \"_tests\" -sname epitest -pa t ebin -s epitest -s epitest modules selftest -s epitest_console_logger -s epitest run 
 
 clean:
 	rm -rf ebin/*.app ebin/*.beam t/*.beam
