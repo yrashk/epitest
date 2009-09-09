@@ -1,11 +1,11 @@
 -module(epitest_slave).
--export([start_link/0, start_link/1, start_link/2]).
+-export([start_link/0, start_link/1, start_link/2, stop/1]).
 -export([block_call/4, block_call/5]).
 -behaviour(gen_server).
 
 -define(SERVER, ?MODULE).
 
--record(state, { counter = 0 }).
+-record(state, { maxid = 0, counter = 0, limit = undefined, waitlist = [] }).
 
 %% API
 -export([start_server_link/0]).
@@ -18,11 +18,25 @@ start_server_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 init([]) ->
-    {ok, #state{}}.
+    Limit = proplists:get_value(max_splitnodes, application:get_all_env(epitest), undefined),
+    {ok, #state{limit=Limit}}.
+
+handle_call(incr, From, #state{counter=Counter, limit=Limit}=State0) when Counter == Limit ->
+    {noreply, State0#state { waitlist = [From|State0#state.waitlist] } };
 
 handle_call(incr, _From, State0) ->
-    State = State0#state{ counter = State0#state.counter + 1},
-    {reply, State#state.counter, State};
+    State = State0#state{ maxid = State0#state.maxid + 1, counter = State0#state.counter + 1},
+    {reply, State#state.maxid, State};
+
+handle_call(decr, _From, State0) ->
+    State = State0#state{ maxid = State0#state.maxid + 1, counter = State0#state.counter - 1, waitlist = wtl(State0#state.waitlist)},
+    case State0#state.waitlist of
+	[H|_T] ->
+	    gen_server:reply(H, State#state.maxid);
+	_ ->
+	    skip
+    end,
+    {reply, ok, State};
 
 handle_call(_Request, _From, State) ->
     {noreply, State}.
@@ -54,9 +68,13 @@ start_link(Args) ->
 start_link(Nodename, Args) ->
     {ok, Host} = inet:gethostname(),
     Paths = get_path(),
-    {ok, Node} = slave:start_link(list_to_atom(Host), Nodename, Args),
+    {ok, Node} = slave:start_link(list_to_atom(Host), Nodename, "-hidden " ++ Args),
     ok = rpc:call(Node, code, add_paths, [Paths]),
     {ok, Node}.
+
+stop(Node) ->
+    gen_server:call(?SERVER, decr),
+    slave:stop(Node).
 
 generate_nodename() ->
     S = [$s,$l,$a,$v,$e|erlang:integer_to_list(gen_server:call(?SERVER, incr))],
@@ -101,3 +119,9 @@ rpc_check_t(X) -> rpc_check(X).
 rpc_check({'EXIT', {{nodedown,_},_}}) -> {badrpc, nodedown};
 rpc_check({'EXIT', X}) -> exit(X);
 rpc_check(X) -> X.
+
+wtl([]) ->
+    [];
+wtl([_H|T]) ->
+    T.
+

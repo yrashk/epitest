@@ -12,7 +12,8 @@
 -export([init/1, 
 
 	 initialized/2, ready/2, running/2, waiting/2,
-
+	 failed/2, passed/2,
+	 
 	 handle_event/3,
 	 handle_sync_event/4, handle_info/3, terminate/3, code_change/4]).
 
@@ -108,6 +109,7 @@ running({success, {epitest_variables, Vars}, State}, _State0) ->
     gen_event:notify(epitest_log, {success, Epistate}),
     NotificationList = lists:flatten([epitest:dependants((State#state.epistate)#epistate.test, Label) || Label <- [r,ir]]),
     gen_server:cast(epitest_test_server, {notify, NotificationList, passed, Epistate, (State#state.epistate)#epistate.test}),
+    gen_fsm:send_event(self(), cleanup),
     {next_state, passed, State#state{ epistate = Epistate}};
 
 running({success, _, State}, _State0) ->
@@ -120,6 +122,7 @@ running({pending, Reason, State}, _State0) ->
     gen_event:notify(epitest_log, {failure, Epistate}),
     NotificationList = lists:flatten([epitest:dependants((State#state.epistate)#epistate.test, Label) || Label <- [ir,fr]]),
     gen_server:cast(epitest_test_server, {notify, NotificationList, failed, Epistate, (State#state.epistate)#epistate.test}),
+    gen_fsm:send_event(self(), cleanup),
     {next_state, failed, State#state{epistate=Epistate}};
 
 running({failure, Result, State}, _State0) ->
@@ -129,6 +132,7 @@ running({failure, Result, State}, _State0) ->
     gen_event:notify(epitest_log, {failure, Epistate}),
     NotificationList = lists:flatten([epitest:dependants((State#state.epistate)#epistate.test, Label) || Label <- [ir,fr]]),
     gen_server:cast(epitest_test_server, {notify, NotificationList, failed, Epistate, (State#state.epistate)#epistate.test}),
+    gen_fsm:send_event(self(), cleanup),
     {next_state, failed, State#state{epistate=Epistate}}.
 
 waiting({notification, passed, Epistate0, Test}, #state{waiting_ir=[Test], waiting_r=[Test], waiting_fr=[]}=State) ->
@@ -165,6 +169,13 @@ waiting({notification, failed, Epistate0, Test}, #state{}=State) ->
     Epistate = merge(State, Epistate0),
     {next_state, waiting, State#state{epistate = Epistate, waiting_ir=State#state.waiting_ir -- [Test], waiting_fr=State#state.waiting_fr -- [Test]}}.
 
+failed(cleanup, State) ->
+    cleanup_splitnodes(State),
+    {next_state, failed, State}.
+
+passed(cleanup, State) ->
+    cleanup_splitnodes(State),
+    {next_state, passed, State}.
 
 %%--------------------------------------------------------------------
 %% Function:
@@ -372,6 +383,14 @@ milliseconds({milliseconds, N}) ->
     N;
 milliseconds(infinity) ->
     infinity.
+
+cleanup_splitnodes(State) ->
+    case epitest:dependants((State#state.epistate)#epistate.test) of
+	[] ->
+	    [ epitest_slave:stop(Node) || Node <- proplists:get_all_values(splitnode, (State#state.epistate)#epistate.options) ];
+	_ ->
+	    skip
+    end.
 
 %%--------------------------------------------------------------------
 %%% Public functions
