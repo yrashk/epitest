@@ -3,7 +3,14 @@
 
 parse_transform(Forms0, _Options) ->
     Forms = forms(Forms0),
-    Tests = lists:flatten(test_forms(Forms)),
+    Tests = list_to_conses(lists:map(fun ({L, FA}) ->
+					     case is_tuple(FA) of
+						 true ->
+						     {tuple, 0, [{integer, 0, L},{tuple, 0, lists:map(fun (A) -> to_form(A,0) end, tuple_to_list(FA))}]};
+						 false ->
+						     {tuple, 0, lists:map(fun (A) -> to_form(A, 0) end, [0,FA])}
+					     end
+				     end, lists:flatten(test_forms(Forms))),0),
     Forms1 = lists:filter(fun (F) ->
 				  case F of
 				      {eof, _} ->
@@ -13,11 +20,8 @@ parse_transform(Forms0, _Options) ->
 				  end
 			  end, Forms),
     EndOfForms = Forms -- Forms1,
-    io:format("~p~n",[    Forms1 ++ [{function, 0, tests, 0, 
-      [{clause, 0, [], [], [{string, 0, Tests}]}]
-      }] ++ EndOfForms]),
     Forms1 ++ [{function, 0, tests, 0, 
-      [{clause, 0, [], [], [{string, 0, Tests}]}]
+      [{clause, 0, [], [], [Tests]}]
       }] ++ EndOfForms.
 
 
@@ -89,3 +93,17 @@ clauses([C|Cs]) ->
     [C|clauses(Cs)];
 clauses([]) ->
     [].
+
+
+%
+list_to_conses([], Line) ->
+    {nil, Line};
+list_to_conses([E|Rest], Line) ->
+    {cons, Line, E, list_to_conses(Rest, Line)}.
+
+to_form(S, Line) when is_list(S) ->
+    {string, Line, S};
+to_form(A, Line) when is_atom(A) ->
+    {atom, Line, A};
+to_form(I, Line) when is_integer(I) ->
+    {integer, Line, I}.
