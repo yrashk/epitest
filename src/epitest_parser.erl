@@ -4,9 +4,21 @@
 parse_transform(Forms0, _Options) ->
     Forms = forms(Forms0),
     Tests = lists:flatten(test_forms(Forms)),
-    Forms ++ [{function, 0, tests, 0, 
+    Forms1 = lists:filter(fun (F) ->
+				  case F of
+				      {eof, _} ->
+					  false;
+				      _ ->
+					  true
+				  end
+			  end, Forms),
+    EndOfForms = Forms -- Forms1,
+    io:format("~p~n",[    Forms1 ++ [{function, 0, tests, 0, 
       [{clause, 0, [], [], [{string, 0, Tests}]}]
-      }].
+      }] ++ EndOfForms]),
+    Forms1 ++ [{function, 0, tests, 0, 
+      [{clause, 0, [], [], [{string, 0, Tests}]}]
+      }] ++ EndOfForms.
 
 
 test_forms([{function, L, test, A, Cs}|Fs]) ->
