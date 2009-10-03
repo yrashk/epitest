@@ -12,7 +12,7 @@
 -export([init/1, 
 
 	 initialized/2, ready/2, running/2, waiting/2,
-	 failed/2, passed/2,
+	 failed/2, passed/2, pending/2,
 	 
 	 handle_event/3,
 	 handle_sync_event/4, handle_info/3, terminate/3, code_change/4]).
@@ -100,6 +100,7 @@ ready(run, State) ->
 		 false ->
 		     State
 	     end,
+    [ epitest_slave:reserve(Node) || Node <- lists:usort(proplists:get_all_values(splitnode, (State1#state.epistate)#epistate.options))],
     RunnerPid = spawn(fun () -> do_run(Pid,Info, State1) end),
     erlang:monitor(process, RunnerPid),
     {next_state, running, State1}.
@@ -170,11 +171,20 @@ waiting({notification, failed, Epistate0, Test}, #state{}=State) ->
     {next_state, waiting, State#state{epistate = Epistate, waiting_ir=State#state.waiting_ir -- [Test], waiting_fr=State#state.waiting_fr -- [Test]}}.
 
 failed(cleanup, State) ->
-    cleanup_splitnodes(State),
+    cleanup_splitnodes(State, true),
+    {next_state, failed, State}.
+
+pending(cleanup, State) ->
+    cleanup_splitnodes(State, true),
     {next_state, failed, State}.
 
 passed(cleanup, State) ->
-    cleanup_splitnodes(State),
+    case epitest:dependants((State#state.epistate)#epistate.test) of
+	[] ->
+	    cleanup_splitnodes(State, true);
+	_ ->
+	    cleanup_splitnodes(State, false)
+    end,
     {next_state, passed, State}.
 
 %%--------------------------------------------------------------------
@@ -244,7 +254,7 @@ handle_sync_event(_Event, _From, StateName, State) ->
 handle_info({'DOWN',_Ref,process,_Pid,killed}, running, State) ->
     Epistate = State#state.epistate,
     Info = get_info(State),
-    Timetrap = proplists:get_value(timetrap, Info, {minutes, 1}), % that's kind of default timetrap
+    Timetrap = proplists:get_value(timetrap, Info, {seconds, 30}), % that's kind of default timetrap
     N = proplists:get_value(negative, Info, false),
     report_result(self(), Info, State#state{epistate=Epistate#epistate{elapsed=milliseconds(Timetrap)}}, {timetrapped, Timetrap}, N),
     {next_state, running, State};
@@ -384,13 +394,8 @@ milliseconds({milliseconds, N}) ->
 milliseconds(infinity) ->
     infinity.
 
-cleanup_splitnodes(State) ->
-    case epitest:dependants((State#state.epistate)#epistate.test) of
-	[] ->
-	    [ epitest_slave:stop(Node) || Node <- proplists:get_all_values(splitnode, (State#state.epistate)#epistate.options) ];
-	_ ->
-	    skip
-    end.
+cleanup_splitnodes(State, Kill) ->
+    [ epitest_slave:free(Node,Kill) || Node <- lists:usort(proplists:get_all_values(splitnode, (State#state.epistate)#epistate.options))].
 
 %%--------------------------------------------------------------------
 %%% Public functions

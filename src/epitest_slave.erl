@@ -1,14 +1,14 @@
 -module(epitest_slave).
--export([start_link/0, start_link/1, start_link/2, stop/1]).
+-export([start_link/0, start_link/1, start_link/2, reserve/1, free/1, free/2, stop/1]).
 -export([block_call/4, block_call/5]).
 -behaviour(gen_server).
 
 -define(SERVER, ?MODULE).
 
--record(state, { maxid = 0, counter = 0, limit = undefined, waitlist = [] }).
+-record(state, { maxid = 0, counter = 0, limit = undefined, waitlist = [], reservations }).
 
 %% API
--export([start_server_link/0]).
+-export([start_server_link/0, stop_server/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -16,10 +16,12 @@
 
 start_server_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+stop_server() ->
+    gen_server:call(?SERVER, stop).
 
 init([]) ->
     Limit = proplists:get_value(max_splitnodes, application:get_all_env(epitest), undefined),
-    {ok, #state{limit=Limit}}.
+    {ok, #state{limit=Limit, reservations = dict:new()}}.
 
 handle_call(incr, From, #state{counter=Counter, limit=Limit}=State0) when Counter == Limit ->
     {noreply, State0#state { waitlist = [From|State0#state.waitlist] } };
@@ -37,6 +39,37 @@ handle_call(decr, _From, State0) ->
 	    skip
     end,
     {reply, ok, State};
+
+handle_call({reserve, Nodename}, _From, #state{reservations=Reservations}=State0) ->
+    State = State0#state{reservations=dict:update_counter(Nodename, 1, Reservations)},
+    {reply, ok, State};
+
+handle_call({free, Nodename, Kill}, _From, #state{reservations=Reservations}=State0) ->
+    State = State0#state{reservations=dict:update_counter(Nodename, -1, Reservations)},
+    case dict:fetch(Nodename, State#state.reservations) of
+	0 ->
+	    State1 = State0#state{reservations=dict:erase(Nodename, State#state.reservations)},
+	    case Kill of 
+		true ->
+		    spawn(?MODULE, stop, [Nodename]);
+		false ->
+		    skip
+	    end,
+	    {reply, ok, State1};
+	_ ->
+	    {reply, ok, State}
+    end;
+    
+
+handle_call(reservations, _From, #state{reservations=Reservations}=State0) ->
+    {reply, dict:to_list(Reservations), State0};
+
+handle_call(stop, _From, #state{reservations=Reservations}=State) ->
+    Nodes = dict:to_list(Reservations),
+    lists:foreach(fun ({Node, _Ctr}) ->
+			  slave:stop(Node)
+		  end, Nodes),
+    {stop, shutdown, ok, State};
 
 handle_call(_Request, _From, State) ->
     {noreply, State}.
@@ -71,6 +104,13 @@ start_link(Nodename, Args) ->
     {ok, Node} = slave:start_link(list_to_atom(Host), Nodename, "-hidden " ++ Args),
     ok = rpc:call(Node, code, add_paths, [Paths]),
     {ok, Node}.
+
+reserve(Node) ->
+    gen_server:call(?SERVER, {reserve, Node}).
+free(Node) ->
+    free(Node, true).
+free(Node, Kill) ->
+    gen_server:call(?SERVER, {free, Node, Kill}).
 
 stop(Node) ->
     gen_server:call(?SERVER, decr),

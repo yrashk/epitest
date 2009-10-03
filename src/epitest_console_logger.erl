@@ -69,6 +69,7 @@ handle_event({failure, Epistate}, State) ->
     {ok, State#state{elapsed = State#state.elapsed + Epistate#epistate.elapsed, failed=State#state.failed + 1} };
 handle_event(finished, State) ->
     io:format("\e[32mPassed: ~w \e[31mFailed: ~w \e[33mPending: ~w\e[0m~nTotal time elapsed: ~fs~n",[State#state.passed, State#state.failed, State#state.pending, State#state.elapsed/1000000]),
+    epitest_slave:stop_server(),
     erlang:halt(),
     {ok, State};
 handle_event(_Event, State) ->
