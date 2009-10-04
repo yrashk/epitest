@@ -179,12 +179,8 @@ pending(cleanup, State) ->
     {next_state, failed, State}.
 
 passed(cleanup, State) ->
-    case epitest:dependants((State#state.epistate)#epistate.test) of
-	[] ->
-	    cleanup_splitnodes(State, true);
-	_ ->
-	    cleanup_splitnodes(State, false)
-    end,
+    Dependants = epitest:dependants((State#state.epistate)#epistate.test),
+    cleanup_splitnodes(State, Dependants == []),
     {next_state, passed, State}.
 
 %%--------------------------------------------------------------------
