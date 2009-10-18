@@ -117,7 +117,7 @@ stop(Node) ->
     slave:stop(Node).
 
 generate_nodename() ->
-    S = [$s,$l,$a,$v,$e|erlang:integer_to_list(gen_server:call(?SERVER, incr))],
+    S = [$s,$l,$a,$v,$e|erlang:integer_to_list(gen_server:call(?SERVER, incr, infinity))],
     {S, erlang:list_to_atom(S)}.
 
 
