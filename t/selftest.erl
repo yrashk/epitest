@@ -201,6 +201,29 @@ test("Instantiable test requirement test") ->
      {f,ok()}
      ];
 
+test("Instantiable test requirement test with a counter") ->
+    [
+     {r, [?instantiate("Instantiable test")]},
+     {f, fun () ->
+                 ?PASS([{instantiated, true}])
+         end}
+     ];
+
+
+test("Deep instantiable test requirement test") ->
+    [
+     {r, [?instantiate("Instantiable test requirement test with a counter")]},
+     {f, fun (State) ->
+                 1 = length(lists:filter(fun ({instantiated, true}) ->
+                                                 true;
+                                             (_) ->
+                                                 false
+                                         end, State#epistate.variables))
+         end}
+     ];
+
+
+
 test("Multiple instantiable test requirement test") ->
     [
      {r, [?instantiate("Instantiable test"), ?instantiate({anothertest, "Instantiable"})]},
