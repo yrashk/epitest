@@ -55,10 +55,14 @@ init([]) ->
 
 handle_event({_, #epistate{test = {'CORE',_,_}}}, State) ->
     {ok, State}; % skip core tests
-handle_event({success, Epistate}, State) ->
-    {M,T,A} = Epistate#epistate.test,
-    io:format("\e[32m[PASSED] \e[90m~-20w\e[32m (~fs) ~p:'~s'(~200p)\e[0m~n", [enode(Epistate),Epistate#epistate.elapsed/1000000,M,T,A]),
-    {ok, State#state{elapsed = State#state.elapsed + Epistate#epistate.elapsed, passed=State#state.passed + 1} };
+handle_event({success, #epistate{ test = {M, T, A} } = Epistate}, State) ->
+    case proplists:get_value(hidden, get_info(Epistate)) of
+        true ->
+            {ok, State#state{elapsed = State#state.elapsed + Epistate#epistate.elapsed} };
+        undefined ->
+            io:format("\e[32m[PASSED] \e[90m~-20w\e[32m (~fs) ~p:'~s'(~200p)\e[0m~n", [enode(Epistate),Epistate#epistate.elapsed/1000000,M,T,A]),
+            {ok, State#state{elapsed = State#state.elapsed + Epistate#epistate.elapsed, passed=State#state.passed + 1} }
+    end;
 handle_event({failure, #epistate{failure={epitest_pending, Reason}}=Epistate}, State) ->
     {M,T,A} = Epistate#epistate.test,
     io:format("\e[33m[PENDNG] \e[90m~-20w\e[33m (~fs) ~p:'~s'(~200p): ~200p\e[0m~n", [enode(Epistate),Epistate#epistate.elapsed/1000000,M,T,A,Reason]),
@@ -123,6 +127,18 @@ code_change(_OldVsn, State, _Extra) ->
 enode(#epistate{}=Epistate) ->
     proplists:get_value(splitnode, Epistate#epistate.options, node()).
     
+get_info(Epistate) ->
+    Test = Epistate#epistate.test,
+    {Mod, Name, Args} = Test,
+    case Test of
+	{'CORE', "All dependants", [M,T,E]} ->
+	    [{r, [{M,T,E}]},{f, fun () -> ok end}];
+	{_,_,[]} ->
+	    apply(Mod, test, [Name]);
+	_ ->
+		apply(Mod, test, [list_to_tuple([Name|Args])])
+    end.
+
 %%--------------------------------------------------------------------
 %%% Public functions
 %%--------------------------------------------------------------------
