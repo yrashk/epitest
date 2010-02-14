@@ -7,7 +7,14 @@
  
 -define(PASS(X), {epitest_variables, X}).
 -define(GET(X, State), proplists:get_value(X, State#epistate.variables)).
-
+-define(GETX(X, State),
+	case ?GET(X, State) of
+	    undefined ->
+		throw({badvar, X});
+	    Value ->
+		Value
+	end).
+	 
 -record(epistate, % if epistate changes, make sure epitest_helpers:splitnodes/1 is updated
 	{
 	  test,
