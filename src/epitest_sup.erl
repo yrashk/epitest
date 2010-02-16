@@ -34,6 +34,8 @@ start_link(_Args) ->
 %% specifications.
 %%--------------------------------------------------------------------
 init([]) ->
+    ets:new(test_descriptors, [public, set, named_table]),
+    ets:new(test_data, [public, set, named_table]),
     TestServer = {epitest_test_server, {epitest_test_server, start_link, []},
 		  permanent,2000,worker,[epitest_test_server]},
     TestSup = {epitest_test_sup,  {epitest_test_sup, start_link, []},

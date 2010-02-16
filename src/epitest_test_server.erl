@@ -148,7 +148,7 @@ code_change(_OldVsn, State, _Extra) ->
 add_vertex({_Line, T}, _Mod, _State) when is_tuple(T) ->
     skip;
 add_vertex({_Line, T}, Mod, State) ->
-    Info = apply(Mod, test, [T]),
+    Info = epitest:test_descriptor(Mod, [T]),
     case proplists:get_value(skip, Info) of
 	true ->
 	    skip;
@@ -193,15 +193,15 @@ add_dep(D,{Mod1, [_|_]=Dep, Args}, Mod, Name, Args0, Edge) when Edge == d; Edge 
 
 % FIXME: Arg0 below doesn't make to make any sense
 add_edge({_, Name, []}, Args0, D, Mod, Edge) when is_list(Name) -> % FIXME: this _ is not a right thing, probably?
-    Info = apply(Mod, test, [Name]),
+    Info = epitest:test_descriptor(Mod, [Name]),
     Deps = proplists:get_value(Edge, Info, []),
     lists:foreach(fun(Dep) -> add_dep(D,Dep, Mod, Name, Args0, Edge) end, Deps);
 add_edge({_, Name}, Args0, D, Mod, Edge) when is_list(Name) -> % FIXME: this _ is not a right thing, probably?
-    Info = apply(Mod, test, [Name]),
+    Info = epitest:test_descriptor(Mod, [Name]),
     Deps = proplists:get_value(Edge, Info, []),
     lists:foreach(fun(Dep) -> add_dep(D,Dep, Mod, Name, Args0, Edge) end, Deps);
 add_edge({_, Name, Args}, _Args0, D, Mod, Edge) when is_list(Name) -> % FIXME: this _ is not a right thing, probably?
-    Info = apply(Mod, test, [list_to_tuple([Name|Args])]),
+    Info = epitest:test_descriptor(Mod, [list_to_tuple([Name|Args])]),
     Deps = proplists:get_value(Edge, Info, []),
     lists:foreach(fun(Dep) -> add_dep(D,Dep, Mod, Name, Args, Edge) end, Deps);
 add_edge({_, _Name}, _Args0, _D, _Mod, _Edge) ->

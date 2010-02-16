@@ -300,6 +300,8 @@ do_run(Pid,Info,State) ->
 			  true ->
 			      epitest_slave:block_call(proplists:get_value(splitnode, Opts), erlang, apply, [F,Args]);
 			  _ ->
+                              [{_, Data}] = ets:lookup(test_data, Epistate#epistate.test),
+                              lists:foreach(fun ({K,V}) -> put(K, V) end, Data),
 			      apply(F,Args)
 		      end,
 		      timer:cancel(TRef),
@@ -357,9 +359,9 @@ get_info(State) ->
 	{'CORE', "All dependants", [M,T,E]} ->
 	    [{r, [{M,T,E}]},{f, fun () -> ok end}];
 	{_,_,[]} ->
-	    apply(Mod, test, [Name]);
+	    epitest:test_descriptor(Mod, [Name]);
 	_ ->
-		apply(Mod, test, [list_to_tuple([Name|Args])])
+            epitest:test_descriptor(Mod, [list_to_tuple([Name|Args])])
     end.
 
 merge_vars(State, Vars) ->

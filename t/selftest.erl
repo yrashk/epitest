@@ -481,4 +481,20 @@ test("Splitnode's timetrap avoidance test") ->
      {timetrap, {seconds, 2}},
      {f, fun () ->
 		 timer:sleep(1000)
-	 end}].
+	 end}];
+
+test("Use of data in test's descriptor") ->
+    data(test, 1),
+    Test = data(test),
+    [{f, fun () ->
+                 1 = Test
+         end}];
+
+test("Use of data in the functor") ->
+    data(test, 1),
+    [{f, fun () ->
+                 1 = data(test)
+         end}];
+      
+
+?EOT.

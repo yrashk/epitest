@@ -1,5 +1,5 @@
 -module(epitest_helpers).
--export([pending/0, pending/1, fpending/0, fpending/1, fail/0, fail/1, ok/0,splitnodes/1]).
+-export([pending/0, pending/1, fpending/0, fpending/1, fail/0, fail/1, ok/0,splitnodes/1, data/1, data/2]).
 
 pending() ->
     pending("PENDING IMPLEMENTATION").
@@ -36,3 +36,9 @@ splitnodes(State) ->
 				   end
 			   end,			 
 			   element(3, State))).
+
+data(Name, Value) ->
+    put(Name, Value).
+
+data(Name) ->
+    get(Name).

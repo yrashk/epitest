@@ -3,7 +3,7 @@
 
 -export([start/0,stop/0]).
 
--export([run/0, dependants/1, dependants/2, requires/1, requires/2, all_dependants/1, all_dependants/2, add_module/1, modules/1, status/1, remaining_tests/0, tests/0]).
+-export([run/0, dependants/1, dependants/2, requires/1, requires/2, all_dependants/1, all_dependants/2, add_module/1, modules/1, status/1, remaining_tests/0, tests/0, test_descriptor/2]).
 
 
 start() ->
@@ -53,3 +53,34 @@ remaining_tests() ->
 
 tests() ->    
     gen_server:call(epitest_test_server, tests).
+
+
+test_descriptor(M, [T]) when is_tuple(T) ->
+    [Tn|A] = tuple_to_list(T),
+    test_descriptor(M, Tn, A);
+
+test_descriptor(M, [T]) ->
+    test_descriptor(M, T, []).
+
+test_descriptor(M, T, A) ->
+    case ets:lookup(test_descriptors, {M, T, A}) of
+        [] ->
+            Saved = erase(),
+            Args = 
+                case A of
+                    [] ->
+                        [T];
+                    _ ->
+                        [list_to_tuple([T|A])]
+                end,
+            D = apply(M, test, Args),
+            Dict = erase(),
+            lists:foreach(fun ({K,V}) -> put(K,V) end, Saved),
+            ets:insert(test_data, {{M, T, A}, Dict}),
+            ets:insert(test_descriptors, {{M, A}, D}),
+            D;
+        [{_, D}] ->
+            D
+    end.
+
+                      
