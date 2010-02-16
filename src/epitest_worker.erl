@@ -295,12 +295,16 @@ do_run(Pid,Info,State) ->
     Nodesplit = proplists:get_value(splitnode, Opts) =/= undefined,
     Functor = fun () ->
 		      {ok, TRef} = timer:kill_after(milliseconds(Timetrap)),
+                      [{_, Data}] = ets:lookup(test_data, Epistate#epistate.test),
 		      Result = 
 		      case Nodesplit of
 			  true ->
-			      epitest_slave:block_call(proplists:get_value(splitnode, Opts), erlang, apply, [F,Args]);
+			      epitest_slave:block_call(proplists:get_value(splitnode, Opts), erlang, apply, 
+                                                       [fun () ->
+                                                                lists:foreach(fun ({K,V}) -> put(K, V) end, Data),
+                                                                erlang:apply(F,Args)
+                                                        end,[]]);
 			  _ ->
-                              [{_, Data}] = ets:lookup(test_data, Epistate#epistate.test),
                               lists:foreach(fun ({K,V}) -> put(K, V) end, Data),
 			      apply(F,Args)
 		      end,

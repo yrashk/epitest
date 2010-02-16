@@ -495,6 +495,13 @@ test("Use of data in the functor") ->
     [{f, fun () ->
                  1 = data(test)
          end}];
+
+test("Use of data in the nodesplit functor") ->
+    data(test, 1),
+    [nodesplit,
+     {f, fun () ->
+                 1 = data(test)
+         end}];
       
 
 ?EOT.
