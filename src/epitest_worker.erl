@@ -290,7 +290,7 @@ do_run(Pid,Info,State) ->
 	       true ->
 		   throw("'f' fun can be either /0 or /1")
 	   end,
-    Timetrap = proplists:get_value(timetrap, Info, {minutes, 1}), % that's kind of default timetrap
+    Timetrap = proplists:get_value(timetrap, Info, {seconds, 30}), % that's kind of default timetrap
     N = proplists:get_value(negative, Info, false),
     Nodesplit = proplists:get_value(splitnode, Opts) =/= undefined,
     Functor = fun () ->
