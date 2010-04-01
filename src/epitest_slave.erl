@@ -23,7 +23,7 @@ init([]) ->
     Limit = proplists:get_value(max_splitnodes, application:get_all_env(epitest), undefined),
     {ok, #state{limit=Limit, reservations = dict:new()}}.
 
-handle_call(incr, From, #state{counter=Counter, limit=Limit}=State0) when Counter == Limit ->
+handle_call(incr, From, #state{counter=Limit, limit=Limit}=State0) ->
     {noreply, State0#state { waitlist = [From|State0#state.waitlist] } };
 
 handle_call(incr, _From, State0) ->
