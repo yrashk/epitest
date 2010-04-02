@@ -5,7 +5,9 @@
   {modules, [
              epitest,
              epitest_app,
-             epitest_sup
+             epitest_sup,
+						 epitest_test_server,
+						 epitest_beam
             ]},
   {applications, [kernel, stdlib]}
   ]}.
