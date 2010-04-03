@@ -21,6 +21,8 @@
 -type test_reference() :: string() | {string(), list(test_argument())} | {module(), string()} |
                           {module(), string, list(test_argument())}.
 
+-type test_unified_reference() :: {module(), string, list(test_argument())}.
+
 -record(test, {
           id :: test_id(),
           loc :: test_loc(),
