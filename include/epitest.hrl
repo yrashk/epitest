@@ -3,10 +3,11 @@
 
 -record(epistate, {
           id, %% test_id()
-          test %% #test{}
+          test, %% #test{}
+          pid %% pid()
          }).
 
--type test_id() :: any(). 
+-type test_id() :: any().
 -type test_title() :: string().
 -type test_argument() :: any().
 -type test_loc() :: {module, module(), integer()} | 'dynamic'.
@@ -28,4 +29,4 @@
           loc :: test_loc(),
           signature :: test_signature(),
           descriptor :: test_descriptor()
-         }).
+				}).

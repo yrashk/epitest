@@ -16,7 +16,9 @@
              epitest_ph_functor,
              epitest_cluster,
              epitest_test_plan_server,
-             epitest_test_plan_sup
+             epitest_test_plan_sup,
+             epitest_test_worker,
+             epitest_test_worker_sup
             ]},
   {applications, [kernel, stdlib]}
  ]}.
