@@ -5,12 +5,6 @@
           descriptor %% test_descriptor()
          }).
 
--record(test, {
-          id,
-          loc,
-          signature,
-          descriptor
-         }).
 
 -type test_id() :: any(). 
 -type test_title() :: string().
@@ -26,3 +20,10 @@
 
 -type test_reference() :: string() | {string(), list(test_argument())} | {module(), string()} |
                           {module(), string, list(test_argument())}.
+
+-record(test, {
+          id :: test_id(),
+          loc :: test_loc(),
+          signature :: test_signature(),
+          descriptor :: test_descriptor()
+         }).
