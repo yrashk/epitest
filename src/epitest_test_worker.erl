@@ -15,11 +15,12 @@ start_link(Plan, Epistate) ->
     gen_fsm:start_link(?MODULE, [Plan, Epistate], []).
 
 init([Plan, #epistate{ id = ID }]) ->
-		{ok, booted, #state{ test_plan = Plan, id = ID }}.
+    {ok, booted, #state{ test_plan = Plan, id = ID }}.
 
-booted(start, #state{ id = ID } = State) ->
-		epitest_prophandler:handle(start, epitest_test_server:lookup(ID)),
-		{next_state, running, State}.
+booted(start, #state{ id = ID, test_plan = Plan } = State) ->
+    Epistate = epitest_test_plan_server:lookup(Plan, ID),
+    epitest_prophandler:handle({start, Epistate}, epitest_test_server:lookup(ID)),
+    {next_state, running, State}.
 
 handle_event(_Event, StateName, State) ->
     {next_state, StateName, State}.
