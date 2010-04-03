@@ -1,7 +1,7 @@
 -module(epitest_test_server).
 -behaviour(gen_server).
 
--export([add/2, add/3, lookup/1, load/1]).
+-export([add/2, add/3, load/1, lookup/1, q/1]).
 
 -include_lib("epitest/include/epitest.hrl").
 
@@ -30,14 +30,6 @@ handle_call({add, Loc, Signature, Descriptor}, _From, #state{ tests = Tests } = 
     ets:insert(Tests, UniformedTest),
     {reply, {ok, ID}, State};
 
-handle_call({lookup, ID}, _From, #state{ tests = Tests } = State) ->
-    case ets:lookup(Tests, ID) of
-        [] ->
-            {reply, {error, notfound}, State};
-        [Test] ->
-            {reply, Test, State}
-    end;
-
 handle_call({load, Module}, From, State) ->
     spawn_link(fun () ->
                        Signatures = epitest_beam:signatures(Module),
@@ -47,7 +39,19 @@ handle_call({load, Module}, From, State) ->
                                                             ({error, _} = Error) -> Error
                                                         end, Replies)})
                end),
-    {noreply, State}.
+    {noreply, State};
+
+handle_call({lookup, ID}, _From, #state{ tests = Tests } = State) ->
+    case ets:lookup(Tests, ID) of
+        [] ->
+            {reply, {error, notfound}, State};
+        [Test] ->
+            {reply, Test, State}
+    end;
+
+handle_call({q, Fun}, _From, #state{ tests = Tests } = State) ->
+    MatchedTests = lists:filter(Fun, ets:tab2list(Tests)),
+    {reply, MatchedTests, State}.
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
@@ -71,15 +75,20 @@ add(Signature, Descriptor) ->
 add(Loc, Signature, Descriptor) ->
     gen_server:call({global, ?SERVER}, {add, Loc, Signature, Descriptor}).
 
+-spec load(module()) -> {'ok', list(test_id())} | {'error', any()}.
+
+load(Module) ->
+    gen_server:call({global, ?SERVER}, {load, Module}).
+
 -spec lookup(test_id()) -> #test{} | {'error', any()}.
 
 lookup(ID) ->
     gen_server:call({global, ?SERVER}, {lookup, ID}).
 
--spec load(module()) -> {'ok', list(test_id())} | {'error', any()}.
+-spec q(fun()) -> #test{}.
 
-load(Module) ->
-    gen_server:call({global, ?SERVER}, {load, Module}).
+q(Fun) ->
+    gen_server:call({global, ?SERVER}, {q, Fun}).
 
 
 %% Internal functions
