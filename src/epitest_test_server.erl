@@ -13,7 +13,7 @@
          }).
 
 
--define(SERVER, {?MODULE, cluster_name()}).
+-define(SERVER, {?MODULE, epitest_cluster:name()}).
 
 start_link() ->
     gen_server:start_link({global, ?SERVER}, ?MODULE, [], []).
@@ -89,8 +89,3 @@ lookup(ID) ->
 
 q(Fun) ->
     gen_server:call({global, ?SERVER}, {q, Fun}).
-
-
-%% Internal functions
-cluster_name() ->
-    proplists:get_value(cluster_name, application:get_all_env(epitest), default).

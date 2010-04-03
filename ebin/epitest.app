@@ -13,7 +13,10 @@
              epitest_beam,
              epitest_prophandler,
              epitest_prophandler_sup,
-             epitest_ph_functor
+             epitest_ph_functor,
+             epitest_cluster,
+             epitest_test_plan_server,
+             epitest_test_plan_sup
             ]},
   {applications, [kernel, stdlib]}
  ]}.

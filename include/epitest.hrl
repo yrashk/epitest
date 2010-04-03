@@ -2,6 +2,7 @@
 -include_lib("eunit/include/eunit.hrl").
 
 -record(epistate, {
+          id, %% test_id()
           test %% #test{}
          }).
 
