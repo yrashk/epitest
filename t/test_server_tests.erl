@@ -5,15 +5,14 @@ test("Add test by title-only signature and descriptor") ->
     [fun() -> 
              Signature = "New test",
              Descriptor = [],
-             epitest_test_server:add(Signature, Descriptor),
-             ?assertEqual(Descriptor, epitest_test_server:lookup(Signature))
+             Ref = epitest_test_server:add(Signature, Descriptor),
+             ?assertMatch(#test{loc = dynamic, signature = Signature, descriptor = Descriptor}, epitest_test_server:lookup(Ref))
      end];
 
 test("Add tests from a module") ->
-    [fun(#epistate{ descriptor = Descriptor }) -> 
+    [fun(#epistate{ descriptor = _Descriptor }) -> % TODO: finish this (it is incomplete)
              Module = ?MODULE,
-             epitest_test_server:load(Module),
-             ?assertEqual(Descriptor, epitest_test_server:lookup("Add tests from a module"))
+             {ok, _Refs} = epitest_test_server:load(Module)
      end];
 
 ?EOT.

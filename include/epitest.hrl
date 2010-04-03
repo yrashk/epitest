@@ -5,8 +5,17 @@
           descriptor %% test_descriptor()
          }).
 
+-record(test, {
+          id,
+          loc,
+          signature,
+          descriptor
+         }).
+
+-type test_id() :: any(). 
 -type test_title() :: string().
 -type test_argument() :: any().
+-type test_loc() :: {module, module(), integer()} | 'dynamic'.
 -type test_signature() :: test_title() | {test_title(), list(test_argument())}.
 -type test_attribute_name() :: atom().
 -type test_attribute_value() :: any().

@@ -10,7 +10,7 @@ signatures(Module) ->
         {ok, {_, [{abstract_code, {_, AC}}]}} ->
             forms(AC);
         {error, beam_lib, _Reason} ->
-						% TODO: issue a warning or actually handle errors everywhere where we use this
+	    % TODO: issue a warning or actually handle errors everywhere where we use this
             []
     end.
 
@@ -18,14 +18,14 @@ signatures(Module) ->
 forms([]) ->
     [];
 forms([{function, _Line, test, 1, Clauses}|_Rest]) ->
-    lists:filter(fun (ignore) -> false; (_) -> true end, signature_forms(Clauses));
+    lists:filter(fun ({_, ignore}) -> false; (_) -> true end, signature_forms(Clauses));
 forms([_Form|Rest]) ->
     forms(Rest).
 
 signature_forms([]) ->
     [];
-signature_forms([{clause, _Line, Head, _Guards, _Body}|Rest]) ->
-    [head(Head)|signature_forms(Rest)].
+signature_forms([{clause, Line, Head, _Guards, _Body}|Rest]) ->
+    [{Line, head(Head)}|signature_forms(Rest)].
 
 
 head([{string, _, "EOT"}]) ->
