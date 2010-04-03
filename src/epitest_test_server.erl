@@ -26,8 +26,8 @@ init([]) ->
 handle_call({add, Loc, Signature, Descriptor}, _From, #state{ tests = Tests } = State) ->
     ID = make_ref(),
     Test = #test{ id = ID, loc = Loc, signature = Signature, descriptor = Descriptor},
-    UniformedTest = epitest_prophandler:handle(uniform, Test),
-    ets:insert(Tests, UniformedTest),
+    NormalizedTest = epitest_prophandler:handle(normalize, Test),
+    ets:insert(Tests, NormalizedTest),
     {reply, {ok, ID}, State};
 
 handle_call({load, Module}, From, State) ->
@@ -71,7 +71,7 @@ add(Signature, Descriptor) ->
     add(dynamic, Signature, Descriptor).
 
 -spec add(test_loc(), test_signature(), test_descriptor()) -> {'ok', test_id()} | {'error', any()}.
-                  
+
 add(Loc, Signature, Descriptor) ->
     gen_server:call({global, ?SERVER}, {add, Loc, Signature, Descriptor}).
 

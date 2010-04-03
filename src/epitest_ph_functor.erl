@@ -6,7 +6,7 @@
 init() ->
     {ok, undefined}.
 
-handle_call({uniform, #test{ descriptor = Descriptor0 } = Test}, _From, State) ->
+handle_call({normalize, #test{ descriptor = Descriptor0 } = Test}, _From, State) ->
     Descriptor =
         lists:map(fun (F) when is_function(F) ->
                           {functor, F};
