@@ -25,7 +25,9 @@ init([]) ->
 
 handle_call({add, Loc, Signature, Descriptor}, _From, #state{ tests = Tests } = State) ->
     ID = make_ref(),
-    ets:insert(Tests, #test{ id = ID, loc = Loc, signature = Signature, descriptor = Descriptor}),
+    Test = #test{ id = ID, loc = Loc, signature = Signature, descriptor = Descriptor},
+    UniformedTest = epitest_prophandler:handle(uniform, Test),
+    ets:insert(Tests, UniformedTest),
     {reply, {ok, ID}, State};
 
 handle_call({lookup, ID}, _From, #state{ tests = Tests } = State) ->
