@@ -10,7 +10,8 @@ test("Add test by title-only signature and descriptor") ->
      end];
 
 test("Add tests from a module") ->
-    [fun(#epistate{ descriptor = _Descriptor }) -> % TODO: finish this (it is incomplete)
+    [fun(#epistate{ test = Test }) -> % TODO: finish this (it is incomplete)
+             #test{ descriptor = _Descriptor } = Test,
              Module = ?MODULE,
              {ok, _Refs} = epitest_test_server:load(Module)
      end];
