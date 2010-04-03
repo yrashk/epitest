@@ -2,8 +2,8 @@
 -include_lib("eunit/include/eunit.hrl").
 
 -record(epistate, {
-					descriptor %% test_descriptor()
-				 }).
+          descriptor %% test_descriptor()
+         }).
 
 -type test_title() :: string().
 -type test_argument() :: any().
