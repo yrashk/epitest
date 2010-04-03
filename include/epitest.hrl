@@ -25,4 +25,4 @@
 
 
 -type test_reference() :: string() | {string(), list(test_argument())} | {module(), string()} |
-													{module(), string, list(test_argument())}.
+                          {module(), string, list(test_argument())}.
