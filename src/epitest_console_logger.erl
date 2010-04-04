@@ -15,13 +15,13 @@ init([]) ->
 handle_event(#epistate{ state = succeeded, test = Test }, State) ->
     #test{ loc = Loc,
            signature = Signature } = Test,
-    io:format("\e[32m[PASSED] \e[32m ~p:\e[37m'~p'\e[32m\e[0m~n", [Loc, Signature]),
+    io:format("\e[32m[PASSED] \e[32m \e[37m~p\e[32m(~w)\e[0m~n", [Signature, Loc]),
     {ok, State#state{ passed = State#state.passed + 1} };
 
 handle_event(#epistate{ state = {failed, Res}, test = Test }, State) ->
     #test{ loc = Loc,
            signature = Signature } = Test,
-    io:format("\e[31m[FAILED] \e[32m ~p:\e[37m'~p'\e[32m:\e[31m~200p\e[0m~n", [Loc, Signature, Res]),
+    io:format("\e[31m[FAILED] \e[32m \e[37m~p\e[32m(~w):\e[31m~200p\e[0m~n", [Signature, Loc, Res]),
     {ok, State#state{ failed = State#state.failed + 1} };
 
 handle_event({finished, _Plan}, State) ->
