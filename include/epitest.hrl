@@ -4,7 +4,8 @@
 -record(epistate, {
           id, %% test_id()
           test, %% #test{}
-          pid %% pid()
+          pid, %% pid()
+          state
          }).
 
 -type test_id() :: any().

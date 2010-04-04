@@ -15,7 +15,7 @@ handle_call({normalize, #test{ descriptor = Descriptor0 } = Test}, _From, State)
                   end, Descriptor0),
     {reply, {ok, Test#test{ descriptor = Descriptor }}, State};
 
-handle_call({{start, Epistate}, #test{ descriptor = Descriptor } = Test}, _From, State) ->
+handle_call({{start, Worker, Epistate}, #test{ descriptor = Descriptor } = Test}, _From, State) ->
     spawn(fun () ->
                   Funs =
                       lists:map(fun ({functor, Fun}) ->
@@ -27,12 +27,19 @@ handle_call({{start, Epistate}, #test{ descriptor = Descriptor } = Test}, _From,
                                                      false
                                              end, Descriptor)),
                   lists:foreach(fun (Fun) ->
+                                        Result = 
                                         if is_function(Fun, 0) ->
-                                                Fun();
+                                                (catch Fun());
                                            is_function(Fun, 1) ->
-                                                Fun(Epistate);
+                                                (catch Fun(Epistate));
                                            true ->
                                                 throw({badarity, Test, Fun})
+                                        end,
+                                        case Result of
+                                            {'EXIT',{Err,Trace}} = Res ->
+                                                gen_fsm:send_event(Worker, {failure, Res});
+                                            _ ->
+                                                gen_fsm:send_event(Worker, success)
                                         end
                                 end, Funs)
           end),

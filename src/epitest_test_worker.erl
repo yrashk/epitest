@@ -5,7 +5,7 @@
 
 -export([start_link/2]).
 %% gen_fsm callbacks
--export([init/1, booted/2, handle_event/3,
+-export([init/1, booted/2, running/2, handle_event/3,
          handle_sync_event/4, handle_info/3, terminate/3, code_change/4]).
 
 -record(state, { id, test_plan }).
@@ -19,8 +19,16 @@ init([Plan, #epistate{ id = ID }]) ->
 
 booted(start, #state{ id = ID, test_plan = Plan } = State) ->
     Epistate = epitest_test_plan_server:lookup(Plan, ID),
-    epitest_prophandler:handle({start, Epistate}, epitest_test_server:lookup(ID)),
+    epitest_prophandler:handle({start, self(), Epistate}, epitest_test_server:lookup(ID)),
     {next_state, running, State}.
+
+running(success, #state{ id = ID, test_plan = Plan } = State) ->
+    gen_fsm:send_event(Plan, {success, ID}),
+    {next_state, succeeded, State};
+
+running({failure, Res}, #state{ id = ID, test_plan = Plan } = State) ->
+    gen_fsm:send_event(Plan, {failure, ID, Res}),    
+    {next_state, failed, State}.
 
 handle_event(_Event, StateName, State) ->
     {next_state, StateName, State}.
