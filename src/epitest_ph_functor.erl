@@ -36,7 +36,7 @@ handle_call({{start, Worker, Epistate}, #test{ descriptor = Descriptor } = Test}
                                                 throw({badarity, Test, Fun})
                                         end,
                                         case Result of
-                                            {'EXIT',{Err,Trace}} = Res ->
+                                            {'EXIT',{_Err,_Trace}} = Res ->
                                                 gen_fsm:send_event(Worker, {failure, Res});
                                             _ ->
                                                 gen_fsm:send_event(Worker, success)
