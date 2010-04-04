@@ -65,7 +65,15 @@ code_change(_OldVsn, State, _Extra) ->
 
 handle(Command, InitialTest) ->
     Handlers = proplists:get_value(property_handlers, application:get_all_env(epitest), []),
-    lists:foldl(fun (Handler, Test0) ->
-                        {ok, Test} = gen_server:call(Handler, {Command, Test0}),
-                        Test
-                end, InitialTest, Handlers).
+    case lists:foldl(fun (_Handler, {stop, Result}) ->
+                             {stop, Result};
+                         (Handler, Result0) ->
+                             {ok, Result} = gen_server:call(Handler, {Command, Result0}),
+                             Result
+                     end, InitialTest, Handlers) of
+        {stop, Result} ->
+            Result;
+        Result ->
+            Result
+    end.
+            
