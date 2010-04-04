@@ -4,7 +4,7 @@
 
 -export([start_link/2]).
 %% gen_fsm callbacks
--export([init/1, booted/2, ready/2, running/2, handle_event/3,
+-export([init/1, booted/2, running/2, handle_event/3,
          handle_sync_event/4, handle_info/3, terminate/3, code_change/4]).
 
 -export([lookup/2]).
@@ -20,27 +20,25 @@ start_link(Name, PlanFun) ->
     gen_fsm:start_link({global, ?SERVER(Name)}, ?MODULE, epitest_test_server:q(PlanFun), []).
 
 init(Tests) ->
-    Epistates = lists:map(fun (#test{ id = ID } = Test0) ->
-                                  Test = epitest_prophandler:handle(plan, Test0),
-                                  #epistate{ id = ID, test = Test }
-                          end, Tests),
     EpistatesTab = ets:new(epitest_states, [public, {keypos, 2}]),
-    {ok, EventMgr} = gen_event:start_link(),
 
-    [ gen_event:add_handler(EventMgr, Handler, []) || Handler <- proplists:get_value(test_plan_handlers, application:get_all_env(epitest), []) ],
-
-    ets:insert(EpistatesTab, Epistates),
-    gen_fsm:send_event(self(), initialize),
-    {ok, booted, #state{
+    State = #state{
            epistates = EpistatesTab,
-           event_mgr = EventMgr
-          }}.
+           event_mgr = initialize_event_mgr()
+          },
 
-booted(initialize, State) ->
+    load_tests(Tests, self(), State),
+
+    gen_fsm:send_event(self(), run),
+
+    {ok, booted, State}.
+
+booted({load, Tests}, State) ->
+    load_tests(Tests, self(), State),
+    {next_state, booted, State};
+
+booted(run, State) ->
     initialize_workers(State),
-    {next_state, ready, State}.
-
-ready(start, State) ->
     spawn(fun () -> start_workers(State) end),
     {next_state, running, State}.
 
@@ -81,6 +79,20 @@ lookup(Server, ID) ->
     gen_fsm:sync_send_all_state_event(Server, {lookup, ID}).
 
 %% Internal function
+
+initialize_event_mgr() ->
+    {ok, EventMgr} = gen_event:start_link(),
+    [ gen_event:add_handler(EventMgr, Handler, []) || Handler <- proplists:get_value(test_plan_handlers, application:get_all_env(epitest), []) ],
+    EventMgr.
+
+
+load_tests(Tests, Plan, #state{ epistates = EpistatesTab }) ->
+    Epistates = lists:map(fun (#test{ id = ID } = Test0) ->
+                                  Test = epitest_prophandler:handle({plan, Plan}, Test0),
+                                  #epistate{ id = ID, test = Test }
+                          end, Tests),
+    ets:insert(EpistatesTab, Epistates).
+    
 
 initialize_workers(#state{ epistates = Epistates }) ->
     EpistateList = ets:tab2list(Epistates),
