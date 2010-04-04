@@ -21,7 +21,7 @@ handle_event(#epistate{ state = succeeded, test = Test } = Epistate, State) ->
 handle_event(#epistate{ state = {failed, Res}, test = Test } = Epistate, State) ->
     #test{ loc = Loc,
            signature = Signature } = Test,
-    io:format("\e[31m[FAILED] \e[32m ~p:\e[37m'~p'\e[32m: ~200p\e[0m~n", [Loc, Signature, Res]),
+    io:format("\e[31m[FAILED] \e[32m ~p:\e[37m'~p'\e[32m:\e[31m~200p\e[0m~n", [Loc, Signature, Res]),
     {ok, State#state{ failed = State#state.failed + 1} };
 
 handle_event({finished, _Plan}, State) ->
