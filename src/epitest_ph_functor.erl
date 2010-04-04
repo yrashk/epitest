@@ -46,4 +46,4 @@ handle_call({{start, Worker, _Properties, Epistate}, #test{ descriptor = Descrip
     {reply, {ok, Test}, State};
 
 handle_call({_Message, Result}, _From, State) ->
-    {reply, Result, State}.
+    {reply, {ok, Result}, State}.
