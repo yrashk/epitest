@@ -3,7 +3,8 @@
   {author, "yrashk@scallable.com"},
   {env, [{property_handlers,
           [
-          epitest_ph_functor
+           epitest_ph_functor,
+           epitest_ph_require
           ]},
          {test_plan_handlers,
           [
@@ -21,6 +22,7 @@
              epitest_prophandler,
              epitest_prophandler_sup,
              epitest_ph_functor,
+             epitest_ph_require,
              epitest_cluster,
              epitest_test_plan_server,
              epitest_test_plan_sup,
