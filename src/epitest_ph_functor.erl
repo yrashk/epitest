@@ -15,7 +15,7 @@ handle_call({normalize, #test{ descriptor = Descriptor0 } = Test}, _From, State)
                   end, Descriptor0),
     {reply, {ok, Test#test{ descriptor = Descriptor }}, State};
 
-handle_call({{start, Worker, Epistate}, #test{ descriptor = Descriptor } = Test}, _From, State) ->
+handle_call({{start, Worker, _Properties, Epistate}, #test{ descriptor = Descriptor } = Test}, _From, State) ->
     spawn(fun () ->
                   Funs =
                       lists:map(fun ({functor, Fun}) ->
@@ -43,4 +43,7 @@ handle_call({{start, Worker, Epistate}, #test{ descriptor = Descriptor } = Test}
                                         end
                                 end, Funs)
           end),
-    {reply, {ok, Test}, State}.
+    {reply, {ok, Test}, State};
+
+handle_call({_Message, Result}, _From, State) ->
+    {reply, Result, State}.
