@@ -20,7 +20,10 @@ start_link(Name, PlanFun) ->
     gen_fsm:start_link({global, ?SERVER(Name)}, ?MODULE, epitest_test_server:q(PlanFun), []).
 
 init(Tests) ->
-    Epistates = [ #epistate{ id = ID, test = Test } || (#test{ id = ID } = Test) <- Tests ],
+    Epistates = lists:map(fun (#test{ id = ID } = Test0) ->
+                                  Test = epitest_prophandler:handle(plan, Test0),
+                                  #epistate{ id = ID, test = Test }
+                          end, Tests),
     EpistatesTab = ets:new(epitest_states, [public, {keypos, 2}]),
     {ok, EventMgr} = gen_event:start_link(),
 
