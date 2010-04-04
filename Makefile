@@ -5,3 +5,6 @@ compile:
 
 test: compile
 	@./rebar epitest
+
+clean:
+	@./rebar clean
