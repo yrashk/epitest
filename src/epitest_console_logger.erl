@@ -18,6 +18,12 @@ handle_event(#epistate{ state = succeeded, test = Test }, State) ->
     io:format("\e[32m[PASSED] \e[32m \e[37m~s\e[32m(~s)\e[0m~n", [format_name(Test), format_loc(Loc)]),
     {ok, State#state{ passed = State#state.passed + 1} };
 
+handle_event(#epistate{ state = {failed, {failed_requirement, Type, FailedReqTest}}, test = Test }, State) ->
+    #test{ loc = Loc,
+           signature = Signature } = Test,
+    io:format("\e[36m[UNREAC]  ~s(~s): expected \"~s\" to be a ~p\e[0m~n", [format_name(Test), format_loc(Loc), format_name(FailedReqTest), Type]),
+    {ok, State#state{ failed = State#state.failed + 1} };
+
 handle_event(#epistate{ state = {failed, Res}, test = Test }, State) ->
     #test{ loc = Loc,
            signature = Signature } = Test,
