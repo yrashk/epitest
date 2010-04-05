@@ -49,32 +49,19 @@ load_references([T|L], Loc) ->
 load_references([], _Loc) ->
     [].
 
-query_references(Title, dynamic) ->
+-define(REFERENCE_QUERY(Match),
     epitest_test_server:q(fun (Test) ->
-                                  case (catch #test{ signature = Title } = Test) of
+                                  case (catch Match = Test) of
                                       {'EXIT', _} -> 
                                           false;
                                       _ ->
                                           true
                                   end
-                          end);
+                          end)).
+        
+query_references(Title, dynamic) ->
+    ?REFERENCE_QUERY(#test{ signature = Title });
 query_references(Title, {module, Module, _Line0}) ->
-    epitest_test_server:q(fun (Test) ->
-                                  case (catch #test{ loc = {module, Module, _Line}, signature = Title} = Test) of
-                                      {'EXIT', _} ->
-                                          false;
-                                      _ ->
-                                          true
-                                  end
-                          end);
-
+    ?REFERENCE_QUERY(#test{ loc = {module, Module, _Line}, signature = Title});
 query_references({Module, Title}, _Loc) when is_atom(Module) ->
-    epitest_test_server:q(fun (Test) ->
-                                  case (catch #test{ loc = {module, Module, _Line}, signature = Title} = Test) of
-                                      {'EXIT', _} ->
-                                          false;
-                                      _ ->
-                                          true
-                                  end
-                          end).
-    
+    ?REFERENCE_QUERY(#test{ loc = {module, Module, _Line}, signature = Title}).
