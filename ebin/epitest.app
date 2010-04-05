@@ -3,11 +3,12 @@
   {author, "yrashk@scallable.com"},
   {env, [{property_handlers,
           [
-           epitest_ph_functor,
-           epitest_ph_require
+           epitest_ph_require,
+           epitest_ph_functor
           ]},
          {test_plan_handlers,
           [
+           epitest_worker_notifier,
            epitest_console_logger,
            epitest_console_runner
           ]}
@@ -29,7 +30,8 @@
              epitest_test_worker,
              epitest_test_worker_sup,
              epitest_console_logger,
-             epitest_console_runner
+             epitest_console_runner,
+             epitest_worker_notifier
             ]},
   {applications, [kernel, stdlib]}
  ]}.

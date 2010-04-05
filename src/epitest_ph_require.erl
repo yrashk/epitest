@@ -36,10 +36,83 @@ handle_call({{prepare, Plan}, #test{ id = ID, loc = Loc } = Test}, _From, State)
                                                       end),
     {reply, {ok, Test}, State};
 
-handle_call({{start, _Worker, _Epistate}, #test{} = Test}, _From, State) ->
-    {reply, {ok, Test}, State}.
+handle_call({{start, _Worker, #epistate{ 
+                       handlers_properties = Properties
+                      }}, #test{} = Test}, _From, State) ->
+    case handle_start(proplists:get_value(require_waiting_success, Properties, []),
+                      proplists:get_value(require_waiting_failure, Properties, []),
+                      proplists:get_value(require_waiting_any, Properties, [])) of
+        stop ->
+            {reply, {stop, Test}, State};
+        ok ->
+            {reply, {ok, Test}, State}
+    end;
+
+handle_call({{notification, Worker,
+              #epistate{ 
+                         handlers_properties = Properties
+                       },
+              #epistate{
+                         id = ID,
+                         state = Notification
+                       }
+             }, #test{} = Test}, _From, State) ->
+    
+    case handle_notification(ID, Notification,
+                             proplists:get_value(require_waiting_success, Properties, []),
+                             proplists:get_value(require_waiting_failure, Properties, []),
+                             proplists:get_value(require_waiting_any, Properties, [])) of
+         {Success, Failure, Any} ->
+            %% Update state
+            gen_fsm:send_all_state_event(Worker, {update_epistate,
+                                                  fun (Epistate) ->
+                                                          Epistate#epistate {
+                                                            handlers_properties =
+                                                            lists:ukeysort(1,
+                                                                           [{require_waiting_succcess, Success},
+                                                                            {require_waiting_failure, Failure},
+                                                                            {require_waiting_any, Any}|
+                                                                            Epistate#epistate.handlers_properties])
+                                                           }
+                                                  end}),
+            gen_fsm:send_event(Worker, start); %% restart it
+        {failed_requirement, {Req, ID}} ->
+            #test{ signature = Signature } = epitest_test_server:lookup(ID),
+            gen_fsm:send_event(Worker, {failure, {failed_requirement, Req, Signature} })
+    end,
+    {reply, {stop, Test}, State}.
 
 %% Internal functions
+
+handle_start(Success, Failure, Any) when (length(Success) > 0) orelse (length(Failure) > 0) orelse (length(Any) > 0) ->
+    stop;
+handle_start(_,_,_) ->
+    ok.
+
+handle_notification(ID, succeeded, Success0, Failure0, Any0) ->
+    case lists:member(ID, Failure0) of
+        true ->
+            {failed_requirement, {failure, ID}};
+        false ->
+            Success = Success0 -- [ID],
+            Failure = Failure0,
+            Any = Any0 -- [ID],
+            {Success, Failure, Any}
+    end;
+
+handle_notification(ID, {failed, _}, Success0, Failure0, Any0) ->
+    case lists:member(ID, Success0) of
+        true ->
+            {failed_requirement, {success, ID}};
+        false ->
+            Success = Success0,
+            Failure = Failure0 -- [ID],
+            Any = Any0 -- [ID],
+            {Success, Failure, Any}
+    end.
+    
+                    
+    
 
 requirements(#test{ descriptor = Descriptor }) ->
     requirements(Descriptor);

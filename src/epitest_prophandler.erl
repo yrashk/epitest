@@ -67,13 +67,12 @@ handle(Command, InitialTest) ->
     Handlers = proplists:get_value(property_handlers, application:get_all_env(epitest), []),
     case lists:foldl(fun (_Handler, {stop, Result}) ->
                              {stop, Result};
-                         (Handler, Result0) ->
-                             {ok, Result} = gen_server:call(Handler, {Command, Result0}),
-                             Result
-                     end, InitialTest, Handlers) of
+                         (Handler, {ok, Result0}) ->
+                             gen_server:call(Handler, {Command, Result0})
+                     end, {ok, InitialTest}, Handlers) of
         {stop, Result} ->
             Result;
-        Result ->
+        {ok, Result} ->
             Result
     end.
             

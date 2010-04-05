@@ -117,11 +117,12 @@ load_tests(Tests, Plan, #state{ epistates = EpistatesTab }) ->
     [ epitest_prophandler:handle({prepare, Plan}, Test) || #epistate{ test = Test } <- Epistates ].
     
 
-initialize_workers(#state{ epistates = Epistates }) ->
+initialize_workers(#state{ event_mgr = EventMgr, epistates = Epistates }) ->
     EpistateList = ets:tab2list(Epistates),
     lists:foreach(fun (Epistate) ->
                           {ok, Pid} = supervisor:start_child(epitest_test_worker_sup, [self(), Epistate]),
                           link(Pid),
+                          gen_event:call(EventMgr, epitest_worker_notifier, {subscribe, Pid}),
                           ets:insert(Epistates, Epistate#epistate{ pid = Pid })
                   end, EpistateList).
 
