@@ -7,7 +7,7 @@
 -export([init/1, handle_event/2, handle_call/2, 
          handle_info/2, terminate/2, code_change/3]).
 
--record(state, { passed = 0, failed = 0 }).
+-record(state, { passed = 0, failed = 0, pending = 0 }).
 
 init([]) ->
     {ok, #state{}}.
@@ -16,6 +16,11 @@ handle_event(#epistate{ state = succeeded, test = Test }, State) ->
     #test{ loc = Loc } = Test,
     io:format("\e[32m[PASSED] \e[32m \e[37m~s\e[32m(~s)\e[0m~n", [format_name(Test), format_loc(Loc)]),
     {ok, State#state{ passed = State#state.passed + 1} };
+
+handle_event(#epistate{ state = {failed, {{pending, Description}, _Stacktrace}}, test = Test }, State) ->
+    #test{ loc = Loc } = Test,
+    io:format("\e[33m[PENDNG]  ~s(~s): ~p\e[0m~n", [format_name(Test), format_loc(Loc), Description]),
+    {ok, State#state{ pending = State#state.pending + 1} };
 
 handle_event(#epistate{ state = {failed, {failed_requirement, Type, FRTest}}, test = Test }, State) ->
     #test{ loc = Loc } = Test,
@@ -29,7 +34,7 @@ handle_event(#epistate{ state = {failed, Res}, test = Test }, State) ->
     {ok, State#state{ failed = State#state.failed + 1} };
 
 handle_event({finished, _Plan}, State) ->
-    io:format("\e[32mPassed: ~w \e[31mFailed: ~w\e[0m~n",[State#state.passed, State#state.failed]),
+    io:format("\e[32mPassed: ~w \e[31mFailed: ~w \e[33mPending: ~w\e[0m~n",[State#state.passed, State#state.failed, State#state.pending]),
     {ok, State};
 
 handle_event(_Event, State) ->

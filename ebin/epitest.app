@@ -4,7 +4,8 @@
   {env, [{property_handlers,
           [
            epitest_ph_require,
-           epitest_ph_functor
+           epitest_ph_functor,
+           epitest_ph_pending
           ]},
          {test_plan_handlers,
           [
@@ -25,6 +26,7 @@
              epitest_prophandler_sup,
              epitest_ph_functor,
              epitest_ph_require,
+             epitest_ph_pending,
              epitest_cluster,
              epitest_test_plan_server,
              epitest_test_plan_sup,

@@ -6,7 +6,7 @@ test("Add test by title-only signature and descriptor") ->
              Signature = "New test",
              Descriptor = [],
              {ok, Ref} = epitest_test_server:add(Signature, Descriptor),
-             ?assertMatch(#test{loc = dynamic, signature = Signature, descriptor = Descriptor},
+             ?assertMatch(#test{loc = dynamic, signature = Signature},
                           epitest_test_server:lookup(Ref))
      end];
 
