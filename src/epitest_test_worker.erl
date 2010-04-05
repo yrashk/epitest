@@ -8,8 +8,7 @@
 -export([init/1, booted/2, running/2, handle_event/3,
          handle_sync_event/4, handle_info/3, terminate/3, code_change/4]).
 
--record(state, { id, test_plan
-               }).
+-record(state, { id, test_plan }).
 
 
 start_link(Plan, Epistate) ->

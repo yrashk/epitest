@@ -5,7 +5,9 @@
           id, %% test_id()
           test, %% #test{}
           pid, %% pid()
-          state
+          state :: {'failed', any()} | 'succeeded' | 'undefined' | 'started',
+          %%
+          handlers_properties = []
          }).
 
 -type test_id() :: any().

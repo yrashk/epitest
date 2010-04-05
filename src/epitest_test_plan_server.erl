@@ -100,11 +100,21 @@ initialize_event_mgr() ->
 
 
 load_tests(Tests, Plan, #state{ epistates = EpistatesTab }) ->
-    Epistates = lists:map(fun (#test{ id = ID } = Test0) ->
-                                  Test = epitest_prophandler:handle({plan, Plan}, Test0),
-                                  #epistate{ id = ID, test = Test }
-                          end, Tests),
-    ets:insert(EpistatesTab, Epistates).
+    Epistates0 = lists:map(fun (#test{ id = ID } = Test0) ->
+                                   Test = epitest_prophandler:handle({plan, Plan}, Test0),
+                                   #epistate{ id = ID, test = Test }
+                           end, Tests),
+    %% Filter out existing epistates (looks like ets:insert_new(Tab, Objects) is not much of a help here, but FIXME?)
+    Epistates = lists:filter(fun (#epistate{ id = ID }) ->
+                                     case ets:lookup(EpistatesTab, ID) of
+                                         [] ->
+                                             true;
+                                         _ -> 
+                                             false
+                                     end
+                             end, Epistates0),
+    ets:insert(EpistatesTab, Epistates),
+    [ epitest_prophandler:handle({prepare, Plan}, Test) || #epistate{ test = Test } <- Epistates ].
     
 
 initialize_workers(#state{ epistates = Epistates }) ->

@@ -21,6 +21,21 @@ handle_call({{plan, Plan}, #test{ loc = Loc } = Test}, _From, State) ->
     end,
     {reply, {ok, Test}, State};
 
+handle_call({{prepare, Plan}, #test{ id = ID, loc = Loc } = Test}, _From, State) ->
+    Requirements = requirements(Test),
+    Success = requirement_ids(success, Requirements, Loc),
+    Failure = requirement_ids(failure, Requirements, Loc),
+    Any = requirement_ids(any, Requirements, Loc),
+    epitest_test_plan_server:update_epistate(Plan, ID, fun (Epistate) ->
+                                                              Epistate#epistate {
+                                                                handlers_properties = [{require_waiting_succcess, Success},
+                                                                                       {require_waiting_failure, Failure},
+                                                                                       {require_waiting_any, Any}|
+                                                                                       Epistate#epistate.handlers_properties]
+                                                               }
+                                                      end),
+    {reply, {ok, Test}, State};
+
 handle_call({{start, _Worker, _Epistate}, #test{} = Test}, _From, State) ->
     {reply, {ok, Test}, State}.
 
@@ -65,3 +80,13 @@ query_references(Title, {module, Module, _Line0}) ->
     ?REFERENCE_QUERY(#test{ loc = {module, Module, _Line}, signature = Title});
 query_references({Module, Title}, _Loc) when is_atom(Module) ->
     ?REFERENCE_QUERY(#test{ loc = {module, Module, _Line}, signature = Title}).
+
+requirement_ids(Kind, [{Kind, Reqs}|Rest], Loc) ->
+    Refs = load_references(Reqs, Loc),
+    IDs = [ ID || #test{ id = ID } <- Refs ],
+    lists:concat([IDs,requirement_ids(Kind, Rest, Loc)]);
+requirement_ids(Kind, [_|Rest], Loc) ->
+    requirement_ids(Kind, Rest, Loc);
+requirement_ids(_Kind, [], _Loc) ->
+    [].
+    
