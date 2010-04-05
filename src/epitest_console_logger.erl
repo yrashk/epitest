@@ -14,23 +14,23 @@ init([]) ->
 
 handle_event(#epistate{ state = succeeded, test = Test }, State) ->
     #test{ loc = Loc } = Test,
-    io:format("\e[32m[PASSED] \e[32m \e[37m~s\e[32m(~s)\e[0m~n", [format_name(Test), format_loc(Loc)]),
+    io:format("\e[32m[PASSED] \e[32m \e[37m~s\e[32m (~s)\e[0m~n", [format_name(Test), format_loc(Loc)]),
     {ok, State#state{ passed = State#state.passed + 1} };
 
 handle_event(#epistate{ state = {failed, {{pending, Description}, _Stacktrace}}, test = Test }, State) ->
     #test{ loc = Loc } = Test,
-    io:format("\e[33m[PENDNG]  ~s(~s): ~p\e[0m~n", [format_name(Test), format_loc(Loc), Description]),
+    io:format("\e[33m[PENDNG]  ~s (~s): ~p\e[0m~n", [format_name(Test), format_loc(Loc), Description]),
     {ok, State#state{ pending = State#state.pending + 1} };
 
 handle_event(#epistate{ state = {failed, {failed_requirement, Type, FRTest}}, test = Test }, State) ->
     #test{ loc = Loc } = Test,
     #test{ loc = FRLoc } = FRTest,
-    io:format("\e[36m[UNREAC]  ~s(~s): expected \"~s\"(~s) to be a ~p\e[0m~n", [format_name(Test), format_loc(Loc), format_name(FRTest), format_loc(FRLoc), Type]),
+    io:format("\e[36m[UNREAC]  ~s (~s): expected \"~s\" (~s) to be a ~p\e[0m~n", [format_name(Test), format_loc(Loc), format_name(FRTest), format_loc(FRLoc), Type]),
     {ok, State#state{ unreachable = State#state.unreachable + 1} };
 
 handle_event(#epistate{ state = {failed, Res}, test = Test }, State) ->
     #test{ loc = Loc } = Test,
-    io:format("\e[31m[FAILED] \e[32m \e[37m~s\e[32m(~s):\e[31m~200p\e[0m~n", [format_name(Test), format_loc(Loc), Res]),
+    io:format("\e[31m[FAILED] \e[32m \e[37m~s\e[32m (~s):\e[31m~200p\e[0m~n", [format_name(Test), format_loc(Loc), Res]),
     {ok, State#state{ failed = State#state.failed + 1} };
 
 handle_event({finished, _Plan}, State) ->
