@@ -7,7 +7,7 @@
 -export([init/1, handle_event/2, handle_call/2, 
          handle_info/2, terminate/2, code_change/3]).
 
--record(state, { passed = 0, failed = 0, pending = 0 }).
+-record(state, { passed = 0, failed = 0, pending = 0, unreachable = 0 }).
 
 init([]) ->
     {ok, #state{}}.
@@ -26,7 +26,7 @@ handle_event(#epistate{ state = {failed, {failed_requirement, Type, FRTest}}, te
     #test{ loc = Loc } = Test,
     #test{ loc = FRLoc } = FRTest,
     io:format("\e[36m[UNREAC]  ~s(~s): expected \"~s\"(~s) to be a ~p\e[0m~n", [format_name(Test), format_loc(Loc), format_name(FRTest), format_loc(FRLoc), Type]),
-    {ok, State#state{ failed = State#state.failed + 1} };
+    {ok, State#state{ unreachable = State#state.unreachable + 1} };
 
 handle_event(#epistate{ state = {failed, Res}, test = Test }, State) ->
     #test{ loc = Loc } = Test,
@@ -34,7 +34,7 @@ handle_event(#epistate{ state = {failed, Res}, test = Test }, State) ->
     {ok, State#state{ failed = State#state.failed + 1} };
 
 handle_event({finished, _Plan}, State) ->
-    io:format("\e[32mPassed: ~w \e[31mFailed: ~w \e[33mPending: ~w\e[0m~n",[State#state.passed, State#state.failed, State#state.pending]),
+    io:format("\e[32mPassed: ~w \e[31mFailed: ~w \e[33mPending: ~w \e[36mUnreachable: ~w\e[0m~n",[State#state.passed, State#state.failed, State#state.pending, State#state.unreachable]),
     {ok, State};
 
 handle_event(_Event, State) ->
