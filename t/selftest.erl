@@ -1,4 +1,6 @@
 -module(selftest).
+-title("Self tests").
+
 -include_lib("epitest/include/test.hrl").
 
 test("Simple test with no dependencies") ->

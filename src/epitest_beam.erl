@@ -15,17 +15,22 @@ signatures(Module) ->
     end.
 
 %% Internal functions
-forms([]) ->
-    [];
-forms([{function, _Line, test, 1, Clauses}|_Rest]) ->
-    lists:filter(fun ({_, ignore}) -> false; (_) -> true end, signature_forms(Clauses));
-forms([_Form|Rest]) ->
-    forms(Rest).
+forms(L) ->
+    forms(L, []).
 
-signature_forms([]) ->
+forms([], _Prefix) ->
     [];
-signature_forms([{clause, Line, Head, _Guards, _Body}|Rest]) ->
-    [{Line, head(Head)}|signature_forms(Rest)].
+forms([{attribute, _Line, title, Title}|Rest], _Prefix) ->
+    forms(Rest, Title);
+forms([{function, _Line, test, 1, Clauses}|_Rest], Prefix) ->
+    lists:filter(fun ({_, _, ignore}) -> false; (_) -> true end, signature_forms(Clauses, Prefix));
+forms([_Form|Rest], Prefix) ->
+    forms(Rest, Prefix).
+
+signature_forms([], _Prefix) ->
+    [];
+signature_forms([{clause, Line, Head, _Guards, _Body}|Rest], Prefix) ->
+    [{Line, Prefix, head(Head)}|signature_forms(Rest, Prefix)].
 
 
 head([{string, _, "EOT"}]) ->

@@ -28,4 +28,4 @@
           loc :: test_loc(),
           signature :: test_signature(),
           descriptor :: test_descriptor()
-				}).
+       }).

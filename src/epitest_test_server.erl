@@ -33,8 +33,8 @@ handle_call({add, Loc, Signature, Descriptor}, _From, #state{ tests = Tests } = 
 handle_call({load, Module}, From, State) ->
     spawn_link(fun () ->
                        Signatures = epitest_beam:signatures(Module),
-                       Replies = [ add({module, Module, Loc}, Signature, apply(Module, test, [Signature])) ||
-                                     {Loc, Signature} <- Signatures ],
+                       Replies = [ add({module, {Module, Prefix}, Line}, Signature, apply(Module, test, [Signature])) ||
+                                     {Line, Prefix, Signature} <- Signatures ],
                        gen_server:reply(From, {ok, lists:map(fun ({ok, Reply}) -> Reply;
                                                             ({error, _} = Error) -> Error
                                                         end, Replies)})
