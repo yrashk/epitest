@@ -36,13 +36,14 @@ handle_call({{prepare, Plan}, #test{ id = ID, loc = Loc } = Test}, _From, State)
                                                       end),
     {reply, {ok, Test}, State};
 
-handle_call({{start, _Worker, #epistate{ 
+handle_call({{start, Worker, #epistate{ 
                        handlers_properties = Properties
                       }}, #test{} = Test}, _From, State) ->
     case handle_start(proplists:get_value(require_waiting_success, Properties, []),
                       proplists:get_value(require_waiting_failure, Properties, []),
                       proplists:get_value(require_waiting_any, Properties, [])) of
         stop ->
+            gen_fsm:send_event(Worker, stop),
             {reply, {stop, Test}, State};
         ok ->
             {reply, {ok, Test}, State}
