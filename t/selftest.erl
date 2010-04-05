@@ -23,5 +23,14 @@ test("Test specified as pending should be pending") ->
 test("Test specified as pending with custom description should be pending") ->
     [pending("Not Implemented")];
 
+test("Test can make itself pending") ->
+    [fun () ->
+             make_pending()
+     end];
+
+test("Test can make itself pending with custom description") ->
+    [fun () ->
+             make_pending("Not Implemented")
+     end];
 
 ?EOT.
