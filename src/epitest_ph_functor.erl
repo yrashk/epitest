@@ -6,44 +6,49 @@
 init() ->
     {ok, undefined}.
 
-handle_call({normalize, #test{ descriptor = Descriptor0 } = Test}, _From, State) ->
-    Descriptor =
-        lists:map(fun (F) when is_function(F) ->
-                          {functor, F};
-                      (Other) ->
-                          Other
-                  end, Descriptor0),
+handle_call({normalize, #test{} = Test}, _From, State) ->
+    Descriptor = normalize_implicit_functors(Test),
     {reply, {ok, Test#test{ descriptor = Descriptor }}, State};
 
-handle_call({{start, Worker, _Properties, Epistate}, #test{ descriptor = Descriptor } = Test}, _From, State) ->
+handle_call({{start, Worker, _Properties, Epistate}, #test{} = Test}, _From, State) ->
     spawn(fun () ->
-                  Funs =
-                      lists:map(fun ({functor, Fun}) ->
-                                        Fun
-                                end,
-                                lists:filter(fun ({functor, _Fun}) ->
-                                                     true;
-                                                 (_) ->
-                                                     false
-                                             end, Descriptor)),
-                  lists:foreach(fun (Fun) ->
-                                        Result = 
-                                        if is_function(Fun, 0) ->
-                                                (catch Fun());
-                                           is_function(Fun, 1) ->
-                                                (catch Fun(Epistate));
-                                           true ->
-                                                throw({badarity, Test, Fun})
-                                        end,
-                                        case Result of
-                                            {'EXIT',{_Err,_Trace}} = Res ->
-                                                gen_fsm:send_event(Worker, {failure, Res});
-                                            _ ->
-                                                gen_fsm:send_event(Worker, success)
-                                        end
-                                end, Funs)
+                  Funs = functors(Test),
+                  case (catch run_functors(Funs, Epistate)) of
+                      {'EXIT', Reason} ->
+                          gen_fsm:send_event(Worker, {failure, Reason});
+                      _ ->
+                          gen_fsm:send_event(Worker, success)
+                  end
           end),
     {reply, {ok, Test}, State};
 
 handle_call({_Message, Result}, _From, State) ->
     {reply, {ok, Result}, State}.
+
+normalize_implicit_functors(#test{ descriptor = Descriptor }) ->
+    normalize_implicit_functors(Descriptor);
+normalize_implicit_functors([F|Rest]) when is_function(F) ->
+    [{functor, F}|normalize_implicit_functors(Rest)];
+normalize_implicit_functors([Property|Rest]) ->
+    [Property|normalize_implicit_functors(Rest)];
+normalize_implicit_functors([]) ->
+    [].
+
+functors(#test{ descriptor = Descriptor }) ->
+    functors(Descriptor);
+functors([{functor, F}|Rest]) when is_function(F) ->
+    [F|functors(Rest)];
+functors([_Property|Rest]) ->
+    functors(Rest);
+functors([]) ->
+    [].
+
+run_functors([F|Fs], Epistate) when is_function(F, 0) ->
+    [F()|run_functors(Fs, Epistate)];
+run_functors([F|Fs], Epistate) when is_function(F, 1) ->
+    [F(Epistate)|run_functors(Fs, Epistate)];
+run_functors([F|_Fs], #epistate{ test = Test }) when is_function(F) ->
+    throw({badarity, Test, F});
+run_functors([], _Epistate) ->
+    [].
+
