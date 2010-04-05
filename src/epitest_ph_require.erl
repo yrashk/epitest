@@ -77,8 +77,8 @@ handle_call({{notification, Worker,
                                                   end}),
             gen_fsm:send_event(Worker, start); %% restart it
         {failed_requirement, {Req, ID}} ->
-            #test{ signature = Signature } = epitest_test_server:lookup(ID),
-            gen_fsm:send_event(Worker, {failure, {failed_requirement, Req, Signature} })
+            FRTest = epitest_test_server:lookup(ID),
+            gen_fsm:send_event(Worker, {failure, {failed_requirement, Req, FRTest} })
     end,
     {reply, {stop, Test}, State}.
 
