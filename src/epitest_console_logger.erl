@@ -46,7 +46,7 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal functions
 
 format_name(#test{ loc = {module, {_, Prefix}, _}, signature = Title}) when is_list(Title), length(Prefix) > 0 ->
-    io_lib:format("~s: ~s",[Prefix, Title]);    
+    io_lib:format("\e[4m~s\e[24m: ~s",[Prefix, Title]);    
 format_name(#test{ signature = Title}) when is_list(Title) ->
     io_lib:format("~s",[Title]).
 
