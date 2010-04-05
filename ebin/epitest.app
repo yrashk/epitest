@@ -20,6 +20,7 @@
              epitest_sup,
              epitest_test_server,
              epitest_beam,
+             epitest_helpers,
              epitest_prophandler,
              epitest_prophandler_sup,
              epitest_ph_functor,

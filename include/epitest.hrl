@@ -1,5 +1,6 @@
 -define(EUNIT_NOAUTO, 1).
 -include_lib("eunit/include/eunit.hrl").
+-import(epitest_helpers, [ok/0]).
 
 -record(epistate, {
           id, %% test_id()
