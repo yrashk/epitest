@@ -7,7 +7,7 @@
 -export([init/1, booted/2, running/2, handle_event/3,
          handle_sync_event/4, handle_info/3, terminate/3, code_change/4]).
 
--export([lookup/2]).
+-export([lookup/2, update_epistate/3]).
 
 -define(SERVER(Name), {?MODULE, epitest_cluster:name(), Name}).
 
@@ -56,7 +56,14 @@ running({failure, ID, Res}, #state{ event_mgr = EventMgr, epistates = Epistates 
     gen_event:notify(EventMgr, Epistate),
     process_remaining_tests(State).
 
-handle_event(_Event, StateName, State) ->
+handle_event({update_epistate, ID, Fun}, StateName, #state{ epistates = Epistates } = State) ->
+    case ets:lookup(Epistates, ID) of
+        [] ->
+            ignore;
+        [Epistate0] ->
+            Epistate = Fun(Epistate0),
+            ets:insert(Epistates, Epistate)
+    end,
     {next_state, StateName, State}.
 
 handle_sync_event({lookup, ID}, _From, StateName, #state{ epistates = Epistates } = State) ->
@@ -77,6 +84,12 @@ code_change(_OldVsn, StateName, State, _Extra) ->
 
 lookup(Server, ID) ->
     gen_fsm:sync_send_all_state_event(Server, {lookup, ID}).
+
+-spec update_epistate(pid(), test_id(), fun((#epistate{}) -> #epistate{})) -> 'ok'.
+
+update_epistate(Server, ID, Fun) ->
+    gen_fsm:send_all_state_event(Server, {update_epistate, ID, Fun}).
+                               
 
 %% Internal function
 

@@ -21,7 +21,7 @@ handle_call({{plan, Plan}, #test{ loc = Loc } = Test}, _From, State) ->
     end,
     {reply, {ok, Test}, State};
 
-handle_call({{start, _Worker, _Properties, _Epistate}, #test{} = Test}, _From, State) ->
+handle_call({{start, _Worker, _Epistate}, #test{} = Test}, _From, State) ->
     {reply, {ok, Test}, State}.
 
 %% Internal functions
