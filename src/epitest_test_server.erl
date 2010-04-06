@@ -23,12 +23,15 @@ init([]) ->
        tests = ets:new(epitest_tests, [public, {keypos, 2}])
       }}.
 
-handle_call({add, Loc, Signature, Descriptor}, _From, #state{ tests = Tests } = State) ->
-    ID = make_ref(),
-    Test = #test{ id = ID, loc = Loc, signature = Signature, descriptor = Descriptor},
-    NormalizedTest = epitest_prophandler:handle(normalize, Test),
-    ets:insert(Tests, NormalizedTest),
-    {reply, {ok, ID}, State};
+handle_call({add, Loc, Signature, Descriptor}, From, #state{ tests = Tests } = State) ->
+    spawn_link(fun () ->
+                       ID = make_ref(),
+                       Test = #test{ id = ID, loc = Loc, signature = Signature, descriptor = Descriptor},
+                       NormalizedTest = epitest_prophandler:handle(normalize, Test),
+                       ets:insert(Tests, NormalizedTest),
+                       gen_server:reply(From, {ok, ID})
+               end),
+    {noreply, State};
 
 handle_call({load, Module}, From, State) ->
     spawn_link(fun () ->
@@ -41,17 +44,23 @@ handle_call({load, Module}, From, State) ->
                end),
     {noreply, State};
 
-handle_call({lookup, ID}, _From, #state{ tests = Tests } = State) ->
-    case ets:lookup(Tests, ID) of
-        [] ->
-            {reply, {error, notfound}, State};
-        [Test] ->
-            {reply, Test, State}
-    end;
+handle_call({lookup, ID}, From, #state{ tests = Tests } = State) ->
+    spawn_link(fun () ->
+                       case ets:lookup(Tests, ID) of
+                           [] ->
+                               gen_server:reply(From, {error, notfound});
+                           [Test] ->
+                               gen_server:reply(From, Test)
+                       end
+               end),
+    {noreply, State};
 
-handle_call({q, Fun}, _From, #state{ tests = Tests } = State) ->
-    MatchedTests = lists:filter(Fun, ets:tab2list(Tests)),
-    {reply, MatchedTests, State}.
+handle_call({q, Fun}, From, #state{ tests = Tests } = State) ->
+    spawn_link(fun () ->
+                       MatchedTests = lists:filter(Fun, ets:tab2list(Tests)),
+                       gen_server:reply(From, MatchedTests)
+               end),
+    {noreply, State}.
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
