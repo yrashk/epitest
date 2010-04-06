@@ -163,7 +163,7 @@ query_references({Module, Title, Args}, dynamic) when is_atom(Module), is_list(T
     ?REFERENCE_QUERY(#test{ loc = {module, {Module, _}, _Line}, signature = {Title, Args}});    
 query_references(Title, {module, {Module, _}, _Line0}=Loc) when is_list(Title) ->
     query_references({Module, Title}, Loc);
-query_references({Module, Title}, {module, {Module0, _}, _Line0}) when is_atom(Module), is_list(Title) ->
+query_references({Module, Title}, {module, {_Module0, _}, _Line0}) when is_atom(Module), is_list(Title) ->
     ?REFERENCE_QUERY(#test{ loc = {module, {Module, _}, _Line}, signature = Title});
 query_references({Title, Args}, {module, {Module, _}, _Line0}=Loc) when is_list(Title), is_list(Args) ->
     query_references({Module, Title, Args}, Loc);

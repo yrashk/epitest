@@ -60,5 +60,5 @@ head([{string, _, String}]) ->
     String;
 head([{tuple, _, [{string, _, String}]}]) ->
     String;
-head([{tuple, _, [{string, _, String}, {cons, _, _, _}]}]) ->
+head([{tuple, _, [{string, _, _String}, {cons, _, _, _}]}]) ->
     ignore. %% We can't get its descriptor anyway (this test is parametrized)
