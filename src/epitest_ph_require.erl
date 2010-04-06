@@ -159,15 +159,17 @@ query_references(Title, dynamic) ->
     ?REFERENCE_QUERY(#test{ signature = Title });
 query_references(Title, {module, {Module, _}, _Line0}) when is_list(Title) ->
     ?REFERENCE_QUERY(#test{ loc = {module, {Module, _}, _Line}, signature = Title});
-query_references({Title, Args} = Signature, {module, {Module, _}, _Line0}) when is_list(Title), is_list(Args) ->
-    case ?REFERENCE_QUERY(#test{ loc = {module, {Module, _}, _Line}, signature = Signature}) of
+query_references({Title, Args}, {module, {Module, _}, _Line0}=Loc) when is_list(Title), is_list(Args) ->
+    query_references({Module, Title, Args}, Loc);
+query_references({Module, Title, Args}, {module, {_Module0, _}, _Line0}) when is_atom(Module), is_list(Title), is_list(Args) ->
+    case ?REFERENCE_QUERY(#test{ loc = {module, {Module, _}, _Line}, signature = {Title, Args}}) of
         [_|_] = Results -> %% Found something
             Results;
         [] ->
             {ok, Ref} = epitest_test_server:add({module, {Module, epitest_beam:prefix(Module)},
                                                  unknown}, %% That's Line. Can we actually find its line?
-                                                Signature, 
-                                                apply(Module, test, [Signature])),
+                                                {Title, Args}, 
+                                                apply(Module, test, [{Title, Args}])),
             [epitest_test_server:lookup(Ref)]
     end;
 

@@ -25,6 +25,10 @@ test("Require parametrized test") ->
     [{require, [{success, [{"Parametrized test", [arg1, arg2]}]}]},
      ok()];
 
+test("Require parametrized test with full module name") ->
+    [{require, [{success, [{selftest, "Parametrized test", [arg1, arg2]}]}]},
+     ok()];
+
 %% Negative tests
 
 test("Negative failing test should succeed") ->
