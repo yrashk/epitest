@@ -1,6 +1,6 @@
 -define(EUNIT_NOAUTO, 1).
 -include_lib("eunit/include/eunit.hrl").
--import(epitest_helpers, [ok/0, pending/0, pending/1, make_pending/0, make_pending/1]).
+-import(epitest_helpers, [ok/0, pending/0, pending/1, make_pending/0, make_pending/1, fail/0, fail/1]).
 
 -record(epistate, {
           id, %% test_id()

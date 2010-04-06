@@ -8,6 +8,13 @@ test("Simple test with no dependencies") ->
      ok()
     ];
 
+test("Simple test that should fail") ->
+    [fun () ->
+             fail("It should fail")
+     end];
+
+%% Dependencies
+
 test("Simple test with a single dependency") ->
     [{require, [{success, ["Simple test with no dependencies"]}]},
      ok()];
