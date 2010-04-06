@@ -16,14 +16,18 @@ test("Simple test that should fail") ->
 %% Parametrized tests
 
 test({"Parametrized test", [Arg1, Arg2]}) ->
-    [fun () ->
-             Arg1, 
-             Arg2
+    [fun (State) ->
+             pass(arg1, Arg1, State), 
+             pass(arg2, Arg2, State)
      end];
 
 test("Require parametrized test") ->
     [{require, [{success, [{"Parametrized test", [arg1, arg2]}]}]},
-     ok()];
+     fun(State) ->
+             ?assertEqual(arg1, retr(arg1, State)),
+             ?assertEqual(arg2, retr(arg2, State))
+     end];
+
 
 test("Require parametrized test with full module name") ->
     [{require, [{success, [{selftest, "Parametrized test", [arg1, arg2]}]}]},
