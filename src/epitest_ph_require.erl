@@ -43,9 +43,10 @@ handle_call({{prepare, Plan}, #test{ id = ID, loc = Loc } = Test}, From, State) 
     {noreply, State};
 
 
-handle_call({{start, Worker, #epistate{ 
-                       handlers_properties = Properties
-                      }}, #test{} = Test}, _From, State) ->
+handle_call({{start, #epistate{ 
+                worker = Worker,
+                handlers_properties = Properties
+               }}, #test{} = Test}, _From, State) ->
     case handle_start(proplists:get_value(require_waiting_success, Properties, []),
                       proplists:get_value(require_waiting_failure, Properties, []),
                       proplists:get_value(require_waiting_any, Properties, [])) of

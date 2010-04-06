@@ -19,7 +19,7 @@ init([Plan, #epistate{ id = ID }]) ->
 
 booted(start, #state{ id = ID, test_plan = Plan } = State) ->
     Epistate = epitest_test_plan_server:lookup(Plan, ID),
-    epitest_prophandler:handle({start, self(), Epistate}, epitest_test_server:lookup(ID)),
+    epitest_prophandler:handle({start, Epistate}, epitest_test_server:lookup(ID)),
     {next_state, running, State}.
 
 running(start, State) -> %% Ignore restarts if it is already running

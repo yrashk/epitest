@@ -5,7 +5,8 @@
 -record(epistate, {
           id, %% test_id()
           test, %% #test{}
-          pid, %% pid()
+          test_plan, %% pid()
+          worker, %% pid()
           state :: {'failed', any()} | 'succeeded' | 'undefined' | 'started',
           %%
           handlers_properties = []

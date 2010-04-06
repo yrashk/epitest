@@ -102,7 +102,7 @@ initialize_event_mgr() ->
 load_tests(Tests, Plan, #state{ epistates = EpistatesTab }) ->
     Epistates0 = lists:map(fun (#test{ id = ID } = Test0) ->
                                    Test = epitest_prophandler:handle({plan, Plan}, Test0),
-                                   #epistate{ id = ID, test = Test }
+                                   #epistate{ id = ID, test_plan = Plan, test = Test }
                            end, Tests),
     %% Filter out existing epistates (looks like ets:insert_new(Tab, Objects) is not much of a help here, but FIXME?)
     Epistates = lists:filter(fun (#epistate{ id = ID }) ->
@@ -123,12 +123,12 @@ initialize_workers(#state{ event_mgr = EventMgr, epistates = Epistates }) ->
                           {ok, Pid} = supervisor:start_child(epitest_test_worker_sup, [self(), Epistate]),
                           link(Pid),
                           gen_event:call(EventMgr, epitest_worker_notifier, {subscribe, Pid}),
-                          ets:insert(Epistates, Epistate#epistate{ pid = Pid })
+                          ets:insert(Epistates, Epistate#epistate{ worker = Pid })
                   end, EpistateList).
 
 start_workers(#state{ epistates = Epistates }) ->
     EpistateList = ets:tab2list(Epistates),
-    lists:foreach(fun (#epistate{ pid = Pid} = Epistate0) ->
+    lists:foreach(fun (#epistate{ worker = Pid} = Epistate0) ->
                           Epistate = Epistate0#epistate{ state = started },
                           ets:insert(Epistates, Epistate),
                           gen_fsm:send_event(Pid, start)

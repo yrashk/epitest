@@ -10,7 +10,7 @@ handle_call({normalize, #test{} = Test}, _From, State) ->
     Descriptor = normalize_implicit_functors(Test),
     {reply, {ok, Test#test{ descriptor = Descriptor }}, State};
 
-handle_call({{start, Worker, Epistate}, #test{} = Test}, _From, State) ->
+handle_call({{start, #epistate{ worker = Worker } = Epistate}, #test{} = Test}, _From, State) ->
     spawn(fun () ->
                   Funs = functors(Test),
                   case (catch run_functors(Funs, Epistate)) of
