@@ -45,7 +45,7 @@ handle_event({finished, _Plan}, State) ->
                         io:format("\e[37m#~w)\e[31m ~p~n~n", [Index, Stacktrace]),
                         Index + 1
                 end, 1, State#state.stacktraces),
-    io:format("~n\e[0m"),
+    io:format("\e[0m~n"),
     {ok, State};
 
 handle_event(_Event, State) ->
