@@ -10,31 +10,38 @@ handle_call({normalize, #test{} = Test}, _From, State) ->
     %% TODO: Process shortcuts
     {reply, {ok, Test}, State};
 
-handle_call({{plan, Plan}, #test{ loc = Loc } = Test}, _From, State) ->
-    Requirements = requirements(Test),
-    References = references(Requirements, Loc),
-    case References of
-        [] ->
-            ignore;
-        _ ->
-            gen_fsm:send_event(Plan, {load, References})
-    end,
-    {reply, {ok, Test}, State};
+handle_call({{plan, Plan}, #test{ loc = Loc } = Test}, From, State) ->
+    spawn_link(fun () ->
+                       Requirements = requirements(Test),
+                       References = references(Requirements, Loc),
+                       case References of
+                           [] ->
+                               ignore;
+                           _ ->
+                               gen_fsm:send_event(Plan, {load, References})
+                       end,
+                       gen_server:reply(From, {ok, Test})
+               end),
+    {noreply, State};
 
-handle_call({{prepare, Plan}, #test{ id = ID, loc = Loc } = Test}, _From, State) ->
-    Requirements = requirements(Test),
-    Success = requirement_ids(success, Requirements, Loc),
-    Failure = requirement_ids(failure, Requirements, Loc),
-    Any = requirement_ids(any, Requirements, Loc),
-    epitest_test_plan_server:update_epistate(Plan, ID, fun (Epistate) ->
-                                                              Epistate#epistate {
-                                                                handlers_properties = [{require_waiting_succcess, Success},
-                                                                                       {require_waiting_failure, Failure},
-                                                                                       {require_waiting_any, Any}|
-                                                                                       Epistate#epistate.handlers_properties]
-                                                               }
-                                                      end),
-    {reply, {ok, Test}, State};
+handle_call({{prepare, Plan}, #test{ id = ID, loc = Loc } = Test}, From, State) ->
+    spawn_link(fun () ->
+                       Requirements = requirements(Test),
+                       Success = requirement_ids(success, Requirements, Loc),
+                       Failure = requirement_ids(failure, Requirements, Loc),
+                       Any = requirement_ids(any, Requirements, Loc),
+                       epitest_test_plan_server:update_epistate(Plan, ID, fun (Epistate) ->
+                                                                                  Epistate#epistate {
+                                                                                    handlers_properties = [{require_waiting_succcess, Success},
+                                                                                                           {require_waiting_failure, Failure},
+                                                                                                           {require_waiting_any, Any}|
+                                                                                                           Epistate#epistate.handlers_properties]
+                                                                                   }
+                                                                          end),
+                       gen_server:reply(From, {ok, Test})
+               end),
+    {noreply, State};
+
 
 handle_call({{start, Worker, #epistate{ 
                        handlers_properties = Properties
@@ -150,10 +157,22 @@ load_references([], _Loc) ->
         
 query_references(Title, dynamic) ->
     ?REFERENCE_QUERY(#test{ signature = Title });
-query_references(Title, {module, Module, _Line0}) ->
-    ?REFERENCE_QUERY(#test{ loc = {module, Module, _Line}, signature = Title});
+query_references(Title, {module, {Module, _}, _Line0}) when is_list(Title) ->
+    ?REFERENCE_QUERY(#test{ loc = {module, {Module, _}, _Line}, signature = Title});
+query_references({Title, Args} = Signature, {module, {Module, _}, _Line0}) when is_list(Title), is_list(Args) ->
+    case ?REFERENCE_QUERY(#test{ loc = {module, {Module, _}, _Line}, signature = Signature}) of
+        [_|_] = Results -> %% Found something
+            Results;
+        [] ->
+            {ok, Ref} = epitest_test_server:add({module, {Module, epitest_beam:prefix(Module)},
+                                                 unknown}, %% That's Line. Can we actually find its line?
+                                                Signature, 
+                                                apply(Module, test, [Signature])),
+            [epitest_test_server:lookup(Ref)]
+    end;
+
 query_references({Module, Title}, _Loc) when is_atom(Module) ->
-    ?REFERENCE_QUERY(#test{ loc = {module, Module, _Line}, signature = Title}).
+    ?REFERENCE_QUERY(#test{ loc = {module, {Module, _}, _Line}, signature = Title}).
 
 requirement_ids(Kind, [{Kind, Reqs}|Rest], Loc) ->
     Refs = load_references(Reqs, Loc),

@@ -67,8 +67,12 @@ code_change(_OldVsn, State, _Extra) ->
 
 format_name(#test{ loc = {module, {_, Prefix}, _}, signature = Title}) when is_list(Title), is_list(Prefix), length(Prefix) > 0 ->
     io_lib:format("\e[4m~s\e[24m: ~s",[Prefix, Title]);    
+format_name(#test{ loc = {module, {_, Prefix}, _}, signature = {Title, Args}}) when is_list(Title), is_list(Prefix), length(Prefix) > 0, is_list(Args) ->
+    io_lib:format("\e[4m~s\e[24m: ~s(~p)",[Prefix, Title, Args]);    
 format_name(#test{ signature = Title}) when is_list(Title) ->
-    io_lib:format("~s",[Title]).
+    io_lib:format("~s",[Title]);
+format_name(#test{ signature = {Title, Args}}) when is_list(Title), is_list(Args) ->
+    io_lib:format("~s(~p)",[Title, Args]).
 
 format_loc({module, {Module, _}, Line}) ->
     io_lib:format("~w.erl:~p",[Module, Line]);

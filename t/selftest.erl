@@ -13,6 +13,18 @@ test("Simple test that should fail") ->
              fail("It should fail")
      end];
 
+%% Parametrized tests
+
+test({"Parametrized test", [Arg1, Arg2]}) ->
+    [fun () ->
+             Arg1, 
+             Arg2
+     end];
+
+test("Require parametrized test") ->
+    [{require, [{success, [{"Parametrized test", [arg1, arg2]}]}]},
+     ok()];
+
 %% Negative tests
 
 test("Negative failing test should succeed") ->
