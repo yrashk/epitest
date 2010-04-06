@@ -13,6 +13,11 @@ test("Simple test that should fail") ->
              fail("It should fail")
      end];
 
+test("Simple failing test") ->
+    [fun () ->
+             fail("It should have failed")
+     end];
+
 %% Parametrized tests
 
 test({"Parametrized test", [Arg1, Arg2]}) ->
@@ -61,6 +66,10 @@ test("Simple test with a single dependency") ->
 
 test("Simple test with a single dependency references through a module") ->
     [{require, [{success, [{selftest, "Simple test with no dependencies"}]}]},
+     ok()];
+
+test("Simple test with a single dependency on a failing test") ->
+    [{require, [{failure, ["Simple failing test"]}]},
      ok()];
 
 %% Passing variables
