@@ -32,8 +32,8 @@ running(success, #state{ id = ID, test_plan = Plan } = State) ->
     gen_fsm:send_event(Plan, {success, ID}),
     {next_state, succeeded, State};
 
-running({failure, Res}, #state{ id = ID, test_plan = Plan } = State) ->
-    gen_fsm:send_event(Plan, {failure, ID, Res}),    
+running({failure, Reason}, #state{ id = ID, test_plan = Plan } = State) ->
+    gen_fsm:send_event(Plan, {failure, ID, Reason}),    
     {next_state, failed, State}.
 
 %% Ignore events when it is over

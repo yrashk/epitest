@@ -30,9 +30,9 @@ handle_event(#epistate{ state = {failed, {failed_requirement, Type, FRTest}}, te
     io:format("\e[36m[UNREAC]  ~s (~s): expected \"~s\" (~s) to be a ~p\e[0m~n", [format_name(Test), format_loc(Loc), format_name(FRTest), format_loc(FRLoc), Type]),
     {ok, State#state{ unreachable = State#state.unreachable + 1 } };
 
-handle_event(#epistate{ state = {failed, {Res, Stacktrace}}, test = Test }, #state{ stacktraces = Stacktraces } = State) ->
+handle_event(#epistate{ state = {failed, {Reason, Stacktrace}}, test = Test }, #state{ stacktraces = Stacktraces } = State) ->
     #test{ loc = Loc } = Test,
-    io:format("\e[31m[FAILED] \e[32m \e[37m~s\e[32m (~s):\e[31m ~s (stacktrace #~w)\e[0m~n", [format_name(Test), format_loc(Loc), format_reason(Res), length(Stacktraces) + 1]),
+    io:format("\e[31m[FAILED] \e[32m \e[37m~s\e[32m (~s):\e[31m ~s (stacktrace #~w)\e[0m~n", [format_name(Test), format_loc(Loc), format_reason(Reason), length(Stacktraces) + 1]),
     {ok, State#state{ failed = State#state.failed + 1,
                       stacktraces = Stacktraces ++ [Stacktrace]
                     } };

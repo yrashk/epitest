@@ -49,9 +49,9 @@ running({success, ID}, #state{ event_mgr = EventMgr, epistates = Epistates } = S
     gen_event:notify(EventMgr, Epistate),
     process_remaining_tests(State);
 
-running({failure, ID, Res}, #state{ event_mgr = EventMgr, epistates = Epistates } = State) ->
+running({failure, ID, Reason}, #state{ event_mgr = EventMgr, epistates = Epistates } = State) ->
     Epistate0 = do_lookup(ID, Epistates),
-    Epistate = Epistate0#epistate{ state = {failed, Res} },
+    Epistate = Epistate0#epistate{ state = {failed, Reason} },
     ets:insert(Epistates, Epistate),
     gen_event:notify(EventMgr, Epistate),
     process_remaining_tests(State).
