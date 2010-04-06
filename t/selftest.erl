@@ -47,6 +47,10 @@ test("Simple test with a single dependency") ->
     [{require, [{success, ["Simple test with no dependencies"]}]},
      ok()];
 
+test("Simple test with a single dependency references through a module") ->
+    [{require, [{success, [{selftest, "Simple test with no dependencies"}]}]},
+     ok()];
+
 %% Pending tests
 
 test("Test with no functors should be pending") ->
