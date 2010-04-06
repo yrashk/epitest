@@ -41,6 +41,14 @@ test("Negative successful test should fail") ->
     [negative,
      ok()];
 
+%% Skipping
+
+test("Skipped test shoud not be executed") ->
+    [skip,
+     fun () ->
+             fail("Should not be executed")
+     end];
+
 %% Dependencies
 
 test("Simple test with a single dependency") ->

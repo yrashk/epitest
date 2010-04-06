@@ -15,9 +15,14 @@ init([]) ->
     {ok, #state{}}.
 
 handle_event(#epistate{ state = succeeded, test = Test }, State) ->
-    #test{ loc = Loc } = Test,
-    io:format("\e[32m[PASSED] \e[32m \e[37m~s\e[32m (~s)\e[0m~n", [format_name(Test), format_loc(Loc)]),
-    {ok, State#state{ passed = State#state.passed + 1} };
+    #test{ loc = Loc, descriptor = Descriptor } = Test,
+    case lists:member(hidden, Descriptor) of
+        false ->
+            io:format("\e[32m[PASSED] \e[32m \e[37m~s\e[32m (~s)\e[0m~n", [format_name(Test), format_loc(Loc)]),
+            {ok, State#state{ passed = State#state.passed + 1} };
+        true ->
+            {ok, State}
+    end;
 
 handle_event(#epistate{ state = {failed, {{pending, Description}, _Stacktrace}}, test = Test }, State) ->
     #test{ loc = Loc } = Test,
