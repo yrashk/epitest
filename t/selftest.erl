@@ -13,6 +13,18 @@ test("Simple test that should fail") ->
              fail("It should fail")
      end];
 
+%% Negative tests
+
+test("Negative failing test should succeed") ->
+    [negative,
+     fun () ->
+             fail()
+     end];
+
+test("Negative successful test should fail") ->
+    [negative,
+     ok()];
+
 %% Dependencies
 
 test("Simple test with a single dependency") ->
