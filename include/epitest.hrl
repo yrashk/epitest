@@ -1,6 +1,8 @@
 -define(EUNIT_NOAUTO, 1).
 -include_lib("eunit/include/eunit.hrl").
--import(epitest_helpers, [ok/0, pending/0, pending/1, make_pending/0, make_pending/1, fail/0, fail/1]).
+-ifndef(NO_AUTOIMPORT).
+-import(epitest_helpers, [ok/0, pending/0, pending/1, make_pending/0, make_pending/1, fail/0, fail/1, pass/3, retr/2]).
+-endif.
 
 -record(epistate, {
           id, %% test_id()
@@ -8,6 +10,7 @@
           test_plan, %% pid()
           worker, %% pid()
           state :: {'failed', any()} | 'succeeded' | 'undefined' | 'started',
+          variables = [] :: list({atom(), any()}),
           %%
           handlers_properties = []
          }).

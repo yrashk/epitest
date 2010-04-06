@@ -30,9 +30,12 @@ handle_call({{prepare, Plan}, #test{ id = ID, loc = Loc } = Test}, From, State) 
                        Success = requirement_ids(success, Requirements, Loc),
                        Failure = requirement_ids(failure, Requirements, Loc),
                        Any = requirement_ids(any, Requirements, Loc),
+                       All = Success ++ Failure ++ Any,
                        epitest_test_plan_server:update_epistate(Plan, ID, fun (Epistate) ->
                                                                                   Epistate#epistate {
-                                                                                    handlers_properties = [{require_waiting_succcess, Success},
+                                                                                    handlers_properties = [
+                                                                                                           {requirements, All},
+                                                                                                           {require_waiting_success, Success},
                                                                                                            {require_waiting_failure, Failure},
                                                                                                            {require_waiting_any, Any}|
                                                                                                            Epistate#epistate.handlers_properties]
@@ -57,33 +60,54 @@ handle_call({{start, #epistate{
             {reply, {ok, Test}, State}
     end;
 
-handle_call({{notification, Worker,
+
+handle_call({{notification, 
               #epistate{ 
-                         handlers_properties = Properties
-                       },
+                id = ID0,
+                test_plan = Plan,
+                variables = Variables,
+                worker = Worker,
+                handlers_properties = Properties
+               },
               #epistate{
                          id = ID,
-                         state = Notification
+                         state = Notification,
+                         variables = VariablesNew
                        }
              }, #test{} = Test}, _From, State) ->
-    
+    %% Process variables
+    case lists:member(ID, proplists:get_value(requirements, Properties, [])) of
+        true ->
+            epitest_test_plan_server:update_epistate(Plan, ID0, 
+                                                     fun (Epistate) ->
+                                                             Epistate#epistate {
+                                                               variables = 
+                                                               lists:ukeysort(1, lists:ukeymerge(1, 
+                                                                                                 lists:ukeysort(1, VariablesNew),
+                                                                                                 lists:ukeysort(1, Variables)))
+                                                              }
+                                                     end);
+        false ->
+            ignore
+    end,
+    %% Handle changes in requirement expectations
     case handle_notification(ID, Notification,
                              proplists:get_value(require_waiting_success, Properties, []),
                              proplists:get_value(require_waiting_failure, Properties, []),
                              proplists:get_value(require_waiting_any, Properties, [])) of
          {Success, Failure, Any} ->
             %% Update state
-            gen_fsm:send_all_state_event(Worker, {update_epistate,
-                                                  fun (Epistate) ->
-                                                          Epistate#epistate {
-                                                            handlers_properties =
-                                                            lists:ukeysort(1,
-                                                                           [{require_waiting_succcess, Success},
-                                                                            {require_waiting_failure, Failure},
-                                                                            {require_waiting_any, Any}|
-                                                                            Epistate#epistate.handlers_properties])
-                                                           }
-                                                  end}),
+            epitest_test_plan_server:update_epistate(Plan, ID0, 
+                                                     fun (Epistate) ->
+                                                             Epistate#epistate {
+                                                               handlers_properties =
+                                                               lists:ukeysort(1,
+                                                                              [{require_waiting_success, Success},
+                                                                               {require_waiting_failure, Failure},
+                                                                               {require_waiting_any, Any}|
+                                                                               Epistate#epistate.handlers_properties])
+                                                              }
+                                                     end),
             gen_fsm:send_event(Worker, start); %% restart it
         {failed_requirement, {Req, ID}} ->
             FRTest = epitest_test_server:lookup(ID),
@@ -119,9 +143,7 @@ handle_notification(ID, {failed, _}, Success0, Failure0, Any0) ->
             Any = Any0 -- [ID],
             {Success, Failure, Any}
     end.
-    
                     
-    
 
 requirements(#test{ descriptor = Descriptor }) ->
     requirements(Descriptor);

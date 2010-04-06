@@ -59,6 +59,21 @@ test("Simple test with a single dependency references through a module") ->
     [{require, [{success, [{selftest, "Simple test with no dependencies"}]}]},
      ok()];
 
+%% Passing variables
+
+test("Pass data") ->
+    [fun (State) ->
+             pass(var1, "var1", State),
+             pass(var2, "var2", State)
+     end];
+
+test("Retrieve passed data") ->
+    [{require, [{success, ["Pass data"]}]},
+     fun (State) ->
+             ?assertEqual("var1", retr(var1, State)),
+             ?assertEqual("var2", retr(var2, State))
+     end];
+
 %% Pending tests
 
 test("Test with no functors should be pending") ->
