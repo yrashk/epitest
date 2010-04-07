@@ -47,7 +47,7 @@ handle_event({finished, _Plan}, State) ->
     %% Dump stacktraces
     io:format("~n\e[4m\e[31mStracktraces:\e[24m~n~n"),
     lists:foldl(fun (Stacktrace, Index) ->
-                        io:format("\e[37m#~w)\e[31m ~p~n~n", [Index, Stacktrace]),
+                        io:format("\e[37m#~w)~n\e[31m~s~n~n", [Index, format_stacktrace(Stacktrace)]),
                         Index + 1
                 end, 1, State#state.stacktraces),
     io:format("\e[0m~n"),
@@ -88,3 +88,8 @@ format_reason(negative) ->
     io_lib:format("This test should have failed", []);
 format_reason(Reason) ->
     io_lib:format("~p",[Reason]).
+
+format_stacktrace([{Module, Fun, Line}|Rest]) ->
+    [io_lib:format("     ~p.erl:~p ~p~n", [Module, Line, Fun])|format_stacktrace(Rest)];
+format_stacktrace([]) ->
+    [].
