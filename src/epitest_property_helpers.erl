@@ -2,7 +2,7 @@
 
 -include_lib("epitest/include/epitest.hrl").
 
--export([functors/1, remove_functors/1]).
+-export([functors/1, remove_functors/1, run_functors/2]).
 
 %%
 %% Exports
@@ -25,4 +25,13 @@ remove_functors([{functor, F}|Rest]) when is_function(F) ->
 remove_functors([_Property|Rest]) ->
     remove_functors(Rest);
 remove_functors([]) ->
+    [].
+
+run_functors([F|Fs], Epistate) when is_function(F, 0) ->
+    [F()|run_functors(Fs, Epistate)];
+run_functors([F|Fs], Epistate) when is_function(F, 1) ->
+    [F(Epistate)|run_functors(Fs, Epistate)];
+run_functors([F|_Fs], #epistate{ test = Test }) when is_function(F) ->
+    throw({badarity, Test, F});
+run_functors([], _Epistate) ->
     [].

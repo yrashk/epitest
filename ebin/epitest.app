@@ -5,9 +5,9 @@
           [
            epitest_ph_require,
            epitest_ph_functor,
-           epitest_ph_negative,
            epitest_ph_pending,
            epitest_ph_timetrap,
+           epitest_ph_negative,
            epitest_ph_skip
           ]},
          {test_plan_handlers,

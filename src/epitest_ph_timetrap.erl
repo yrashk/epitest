@@ -12,8 +12,7 @@ handle_call({normalize, #test{ descriptor = Descriptor0 } = Test}, _From, State)
                                                       application:get_all_env(epitest), 
                                                       {30, seconds})),
 
-    Fun = timetrapize(Timeout, epitest_property_helpers:functors(Test)),
-    Descriptor = [{functor, Fun}|epitest_property_helpers:remove_functors(Test)],
+    Descriptor = [{functor, start_timetrap(Timeout)}|Descriptor0],
     {reply, {ok, Test#test{ descriptor = Descriptor }}, State};
 
 handle_call({_Message, Result}, _From, State) ->
@@ -23,23 +22,16 @@ handle_call({_Message, Result}, _From, State) ->
 %% Internal functions
 %%
 
-timetrapize(Timeout, Funs) ->
+start_timetrap(Timeout) ->
     Ms = milliseconds(Timeout),
-    fun (Epistate) ->
-            timer:exit_after(Ms, {timetrapped, Timeout}),
-            F = combined_functor(Funs),
-            F(Epistate)
+    fun (#epistate{ worker = Worker }) ->
+            {ok, _Tref} = timer:apply_after(Ms, erlang, apply, [fun () ->
+                                                                        gen_fsm:send_event(Worker, {failure, {{timetrapped, Timeout}, []}}),
+                                                                        exit(timetrapped)
+                                                                end, []])
     end.
 
 
-combined_functor(Funs) ->
-    fun (Epistate) ->
-            lists:map(fun (F) when is_function(F, 0) ->
-                              F();
-                          (F) when is_function(F, 1) ->
-                              F(Epistate)
-                      end, Funs)
-    end.
 
 milliseconds({N, seconds}) ->
     N * 1000;

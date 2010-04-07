@@ -56,7 +56,8 @@ test("This test should fail because of the time trap") ->
     [
      {timetrap, {2000, milliseconds}},
      fun () ->
-             timer:sleep(3000)
+             timer:sleep(3000),
+             ?debugMsg("over timetrap~n")
      end];
 
 %% Skipping
