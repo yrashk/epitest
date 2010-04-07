@@ -41,7 +41,7 @@ booted(run, State) ->
     initialize_workers(State),
     spawn(fun () -> start_workers(State) end),
     {next_state, running, State}.
-
+    
 running({success, ID}, #state{ event_mgr = EventMgr, epistates = Epistates } = State) ->
     Epistate0 = do_lookup(ID, Epistates),
     Epistate = Epistate0#epistate{ state = succeeded },

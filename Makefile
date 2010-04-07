@@ -3,7 +3,7 @@ all: test
 compile:
 	@./rebar compile
 
-test: compile
+test: 
 	@./rebar epitest
 
 clean:
