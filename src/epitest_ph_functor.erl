@@ -10,17 +10,26 @@ handle_call({normalize, #test{} = Test}, _From, State) ->
     Descriptor = normalize_implicit_functors(Test),
     {reply, {ok, Test#test{ descriptor = Descriptor }}, State};
 
-handle_call({{start, #epistate{ worker = Worker } = Epistate}, #test{} = Test}, _From, State) ->
+handle_call({{start, #epistate{ id = ID, test_plan = Plan } = Epistate}, #test{} = Test}, From, State) ->
     spawn(fun () ->
                   Funs = epitest_property_helpers:functors(Test),
+                  Result = 
                   case (catch epitest_property_helpers:run_functors(Funs, Epistate)) of
                       {'EXIT', Reason} ->
-                          gen_fsm:send_event(Worker, {failure, Reason});
+                          {failure, Reason};
                       _ ->
-                          gen_fsm:send_event(Worker, success)
-                  end
+                          success
+                  end,
+                  epitest_test_plan_server:update_epistate(Plan, ID, 
+                                                          fun (Epistate0) ->
+                                                                  Epistate0#epistate{
+                                                                    handlers_properties = [{functor_result, Result}|
+                                                                                           Epistate0#epistate.handlers_properties]
+                                                                   }
+                                                          end),
+                  gen_server:reply(From, {ok, Test})
           end),
-    {reply, {ok, Test}, State};
+    {noreply, State};
 
 handle_call({_Message, Result}, _From, State) ->
     {reply, {ok, Result}, State}.
