@@ -7,6 +7,7 @@
            epitest_ph_functor,
            epitest_ph_negative,
            epitest_ph_pending,
+           epitest_ph_timetrap,
            epitest_ph_skip
           ]},
          {test_plan_handlers,
@@ -16,6 +17,7 @@
            epitest_console_runner
           ]}
          ]},
+         {timetrap_threshold, 30000},
   {mod, {epitest_app,[]}},
   {modules, [
              epitest,
@@ -24,12 +26,14 @@
              epitest_test_server,
              epitest_beam,
              epitest_helpers,
+             epitest_property_helpers,
              epitest_prophandler,
              epitest_prophandler_sup,
              epitest_ph_functor,
              epitest_ph_require,
              epitest_ph_negative,
              epitest_ph_pending,
+             epitest_ph_timetrap,
              epitest_ph_skip,
              epitest_cluster,
              epitest_test_plan_server,

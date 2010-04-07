@@ -12,7 +12,7 @@ handle_call({normalize, #test{} = Test}, _From, State) ->
 
 handle_call({{start, #epistate{ worker = Worker } = Epistate}, #test{} = Test}, _From, State) ->
     spawn(fun () ->
-                  Funs = functors(Test),
+                  Funs = epitest_property_helpers:functors(Test),
                   case (catch run_functors(Funs, Epistate)) of
                       {'EXIT', Reason} ->
                           gen_fsm:send_event(Worker, {failure, Reason});
@@ -32,15 +32,6 @@ normalize_implicit_functors([F|Rest]) when is_function(F) ->
 normalize_implicit_functors([Property|Rest]) ->
     [Property|normalize_implicit_functors(Rest)];
 normalize_implicit_functors([]) ->
-    [].
-
-functors(#test{ descriptor = Descriptor }) ->
-    functors(Descriptor);
-functors([{functor, F}|Rest]) when is_function(F) ->
-    [F|functors(Rest)];
-functors([_Property|Rest]) ->
-    functors(Rest);
-functors([]) ->
     [].
 
 run_functors([F|Fs], Epistate) when is_function(F, 0) ->

@@ -17,7 +17,7 @@ test("Simple test that should fail") ->
 
 test({"Parametrized test", [Arg1, Arg2]}) ->
     [fun () ->
-             Arg1, 
+             Arg1,
              Arg2
      end];
 
@@ -40,6 +40,15 @@ test("Negative failing test should succeed") ->
 test("Negative successful test should fail") ->
     [negative,
      ok()];
+
+%% Time trapping
+
+test("This test should fail because of the time trap") ->
+    [
+     {timetrap, {2000, milliseconds}},
+     fun () ->
+             timer:sleep(3000)
+     end];
 
 %% Skipping
 

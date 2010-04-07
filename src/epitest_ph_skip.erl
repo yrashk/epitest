@@ -10,7 +10,7 @@ handle_call({normalize, #test{ descriptor = Descriptor0 } = Test}, _From, State)
     Descriptor =
         case lists:member(skip, Descriptor0) of
             true ->
-                [hidden|remove_functors(Test)];
+                [hidden|epitest_property_helpers:remove_functors(Test)];
             _ ->
                 Descriptor0
         end,
@@ -18,12 +18,3 @@ handle_call({normalize, #test{ descriptor = Descriptor0 } = Test}, _From, State)
 
 handle_call({_Message, Result}, _From, State) ->
     {reply, {ok, Result}, State}.
-
-remove_functors(#test{ descriptor = Descriptor }) ->
-    remove_functors(Descriptor);
-remove_functors([{functor, F}|Rest]) when is_function(F) ->
-    remove_functors(Rest);
-remove_functors([_Property|Rest]) ->
-    remove_functors(Rest);
-remove_functors([]) ->
-    [].

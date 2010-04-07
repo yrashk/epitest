@@ -8,7 +8,7 @@ init() ->
 
 handle_call({normalize, #test{ descriptor = Descriptor0 } = Test}, _From, State) ->
     Descriptor = 
-        case functors(Test) of
+        case epitest_property_helpers:functors(Test) of
             [] ->
                 [{functor, fun epitest_helpers:make_pending/0}|Descriptor0];
             _ ->
@@ -18,12 +18,3 @@ handle_call({normalize, #test{ descriptor = Descriptor0 } = Test}, _From, State)
 
 handle_call({_Message, Result}, _From, State) ->
     {reply, {ok, Result}, State}.
-
-functors(#test{ descriptor = Descriptor }) ->
-    functors(Descriptor);
-functors([{functor, F}|Rest]) when is_function(F) ->
-    [F|functors(Rest)];
-functors([_Property|Rest]) ->
-    functors(Rest);
-functors([]) ->
-    [].
