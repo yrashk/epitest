@@ -6,21 +6,30 @@
 init() ->
     {ok, undefined}.
 
-handle_call({{start,  #epistate{ id = ID, test_plan = Plan, worker = Worker }},
+handle_call({{start,  #epistate{ id = ID, test_plan = Plan }},
              #test{ descriptor = Descriptor } = Test}, _From, State) ->
     #epistate{ mods_properties = Properties } = epitest_test_plan_server:lookup(Plan, ID),
     Invert = proplists:get_value(negative, Descriptor, false),
-    Result = proplists:get_value(functor_result, Properties),
-    gen_fsm:send_event(Worker, result(Invert, Result)),
+    case Invert of 
+        true ->
+            Result = proplists:get_value(functor_result, Properties),
+            epitest_test_plan_server:update_epistate(Plan, ID, fun (Epistate) ->
+                                                                       Epistate#epistate{
+                                                                         mods_properties = [{functor_result, 
+                                                                                             invert(Result)}|
+                                                                                            Epistate#epistate.mods_properties]
+                                                                         }
+                                                               end);
+        _ ->
+            ignore
+    end,
     {reply, {ok, Test}, State};
 
 handle_call({_Message, Result}, _From, State) ->
     {reply, {ok, Result}, State}.
 
 
-result(true, success) ->
+invert(success) ->
     {failure, negative};
-result(true, {failure, _}) ->
-    success;
-result(false, Result) ->
-    Result.
+invert({failure, _}) ->
+    success.
