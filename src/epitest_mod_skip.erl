@@ -1,4 +1,4 @@
--module(epitest_ph_skip).
+-module(epitest_mod_skip).
 
 -include_lib("epitest/include/epitest.hrl").
 -export([init/0,handle_call/3]).

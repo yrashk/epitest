@@ -1,4 +1,4 @@
--module(epitest_prophandler).
+-module(epitest_mod).
 -behaviour(gen_server).
 
 -export([handle/2]).
@@ -64,12 +64,12 @@ code_change(_OldVsn, State, _Extra) ->
 -spec handle(any(), #test{}) -> #test{}.
 
 handle(Command, InitialTest) ->
-    Handlers = proplists:get_value(property_handlers, application:get_all_env(epitest), []),
-    case lists:foldl(fun (_Handler, {stop, Result}) ->
+    Mods = proplists:get_value(mods, application:get_all_env(epitest), []),
+    case lists:foldl(fun (_Mod, {stop, Result}) ->
                              {stop, Result};
-                         (Handler, {ok, Result0}) ->
-                             gen_server:call(Handler, {Command, Result0})
-                     end, {ok, InitialTest}, Handlers) of
+                         (Mod, {ok, Result0}) ->
+                             gen_server:call(Mod, {Command, Result0})
+                     end, {ok, InitialTest}, Mods) of
         {stop, Result} ->
             Result;
         {ok, Result} ->

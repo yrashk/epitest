@@ -27,7 +27,7 @@ handle_call({add, Loc, Signature, Descriptor}, From, #state{ tests = Tests } = S
     spawn_link(fun () ->
                        ID = make_ref(),
                        Test = #test{ id = ID, loc = Loc, signature = Signature, descriptor = Descriptor},
-                       NormalizedTest = epitest_prophandler:handle(normalize, Test),
+                       NormalizedTest = epitest_mod:handle(normalize, Test),
                        ets:insert(Tests, NormalizedTest),
                        gen_server:reply(From, {ok, ID})
                end),

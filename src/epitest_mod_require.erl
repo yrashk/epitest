@@ -1,4 +1,4 @@
--module(epitest_ph_require).
+-module(epitest_mod_require).
 
 -include_lib("epitest/include/epitest.hrl").
 -export([init/0,handle_call/3]).
@@ -33,12 +33,12 @@ handle_call({{prepare, Plan}, #test{ id = ID, loc = Loc } = Test}, From, State) 
                        All = Success ++ Failure ++ Any,
                        epitest_test_plan_server:update_epistate(Plan, ID, fun (Epistate) ->
                                                                                   Epistate#epistate {
-                                                                                    handlers_properties = [
+                                                                                    mods_properties = [
                                                                                                            {requirements, All},
                                                                                                            {require_waiting_success, Success},
                                                                                                            {require_waiting_failure, Failure},
                                                                                                            {require_waiting_any, Any}|
-                                                                                                           Epistate#epistate.handlers_properties]
+                                                                                                           Epistate#epistate.mods_properties]
                                                                                    }
                                                                           end),
                        gen_server:reply(From, {ok, Test})
@@ -48,7 +48,7 @@ handle_call({{prepare, Plan}, #test{ id = ID, loc = Loc } = Test}, From, State) 
 
 handle_call({{start, #epistate{ 
                 worker = Worker,
-                handlers_properties = Properties
+                mods_properties = Properties
                }}, #test{} = Test}, _From, State) ->
     case handle_start(proplists:get_value(require_waiting_success, Properties, []),
                       proplists:get_value(require_waiting_failure, Properties, []),
@@ -67,7 +67,7 @@ handle_call({{notification,
                 test_plan = Plan,
                 variables = Variables,
                 worker = Worker,
-                handlers_properties = Properties
+                mods_properties = Properties
                },
               #epistate{
                          id = ID,
@@ -100,12 +100,12 @@ handle_call({{notification,
             epitest_test_plan_server:update_epistate(Plan, ID0, 
                                                      fun (Epistate) ->
                                                              Epistate#epistate {
-                                                               handlers_properties =
+                                                               mods_properties =
                                                                lists:ukeysort(1,
                                                                               [{require_waiting_success, Success},
                                                                                {require_waiting_failure, Failure},
                                                                                {require_waiting_any, Any}|
-                                                                               Epistate#epistate.handlers_properties])
+                                                                               Epistate#epistate.mods_properties])
                                                               }
                                                      end),
             gen_fsm:send_event(Worker, start); %% restart it

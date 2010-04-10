@@ -1,4 +1,4 @@
--module(epitest_ph_timetrap).
+-module(epitest_mod_timetrap).
 
 -include_lib("epitest/include/epitest.hrl").
 -export([init/0,handle_call/3]).

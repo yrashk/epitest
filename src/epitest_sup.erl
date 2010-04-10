@@ -13,12 +13,12 @@ start_link(_Args) ->
 init([]) ->
     TestServer = {epitest_test_server, {epitest_test_server, start_link, []},
                   permanent,2000,worker,[epitest_test_server]},
-    PropHandlerSup = {epitest_prophandler_sup, {epitest_prophandler_sup, start_link, []},
+    ModsSup = {epitest_mods_sup, {epitest_mods_sup, start_link, []},
                       permanent, infinity, supervisor, dynamic},
     TestPlanSup = {epitest_test_plan_sup, {epitest_test_plan_sup, start_link, []},
                    permanent, infinity, supervisor, dynamic},
     TestWorkerSup = {epitest_test_worker_sup, {epitest_test_worker_sup, start_link, []},
                     permanent, infinity, supervisor, dynamic},
-    {ok,{{one_for_one,0,1}, [TestServer, PropHandlerSup, TestPlanSup, TestWorkerSup]}}.
+    {ok,{{one_for_one,0,1}, [TestServer, ModsSup, TestPlanSup, TestWorkerSup]}}.
 
 

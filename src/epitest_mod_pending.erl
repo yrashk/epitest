@@ -1,4 +1,4 @@
--module(epitest_ph_pending).
+-module(epitest_mod_pending).
 
 -include_lib("epitest/include/epitest.hrl").
 -export([init/0,handle_call/3]).

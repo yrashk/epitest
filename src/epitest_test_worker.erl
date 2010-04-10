@@ -19,7 +19,7 @@ init([Plan, #epistate{ id = ID }]) ->
 
 booted(start, #state{ id = ID, test_plan = Plan } = State) ->
     Epistate = epitest_test_plan_server:lookup(Plan, ID),
-    epitest_prophandler:handle({start, Epistate}, epitest_test_server:lookup(ID)),
+    epitest_mod:handle({start, Epistate}, epitest_test_server:lookup(ID)),
     {next_state, running, State}.
 
 running(start, State) -> %% Ignore restarts if it is already running
@@ -48,7 +48,7 @@ failed(_, State) ->
 
 handle_event({notification, #epistate{} = NotificationEpistate}, StateName, #state{ id = ID, test_plan = Plan } = State) ->
     Epistate = epitest_test_plan_server:lookup(Plan, ID),
-    epitest_prophandler:handle({notification, Epistate, NotificationEpistate}, epitest_test_server:lookup(ID)),
+    epitest_mod:handle({notification, Epistate, NotificationEpistate}, epitest_test_server:lookup(ID)),
     {next_state, StateName, State};
 
 handle_event({update_epistate, Fun}, StateName, #state{ id = ID, test_plan = Plan } = State) ->

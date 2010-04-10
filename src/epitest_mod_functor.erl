@@ -1,4 +1,4 @@
--module(epitest_ph_functor).
+-module(epitest_mod_functor).
 
 -include_lib("epitest/include/epitest.hrl").
 -export([init/0,handle_call/3]).
@@ -23,8 +23,8 @@ handle_call({{start, #epistate{ id = ID, test_plan = Plan } = Epistate}, #test{}
                   epitest_test_plan_server:update_epistate(Plan, ID, 
                                                           fun (Epistate0) ->
                                                                   Epistate0#epistate{
-                                                                    handlers_properties = [{functor_result, Result}|
-                                                                                           Epistate0#epistate.handlers_properties]
+                                                                    mods_properties = [{functor_result, Result}|
+                                                                                       Epistate0#epistate.mods_properties]
                                                                    }
                                                           end),
                   gen_server:reply(From, {ok, Test})

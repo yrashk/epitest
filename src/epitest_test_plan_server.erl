@@ -101,7 +101,7 @@ initialize_event_mgr() ->
 
 load_tests(Tests, Plan, #state{ epistates = EpistatesTab }) ->
     Epistates0 = lists:map(fun (#test{ id = ID } = Test0) ->
-                                   Test = epitest_prophandler:handle({plan, Plan}, Test0),
+                                   Test = epitest_mod:handle({plan, Plan}, Test0),
                                    #epistate{ id = ID, test_plan = Plan, test = Test }
                            end, Tests),
     %% Filter out existing epistates (looks like ets:insert_new(Tab, Objects) is not much of a help here, but FIXME?)
@@ -114,7 +114,7 @@ load_tests(Tests, Plan, #state{ epistates = EpistatesTab }) ->
                                      end
                              end, Epistates0),
     ets:insert(EpistatesTab, Epistates),
-    [ epitest_prophandler:handle({prepare, Plan}, Test) || #epistate{ test = Test } <- Epistates ].
+    [ epitest_mod:handle({prepare, Plan}, Test) || #epistate{ test = Test } <- Epistates ].
     
 
 initialize_workers(#state{ event_mgr = EventMgr, epistates = Epistates }) ->

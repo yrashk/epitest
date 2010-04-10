@@ -12,7 +12,7 @@
           state :: {'failed', any()} | 'succeeded' | 'undefined' | 'started',
           variables = [] :: list({atom(), any()}),
           %%
-          handlers_properties = []
+          mods_properties = []
          }).
 
 -type test_id() :: any().
