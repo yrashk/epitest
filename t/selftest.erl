@@ -8,14 +8,9 @@ test("Simple test with no dependencies") ->
      ok()
     ];
 
-test("Simple test that should fail") ->
-    [fun () ->
-             fail("It should fail")
-     end];
-
 test("Simple failing test") ->
     [fun () ->
-             fail("It should have failed")
+             fail("It should failed, that's ok")
      end];
 
 %% Parametrized tests
