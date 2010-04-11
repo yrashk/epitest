@@ -29,9 +29,40 @@ handle_call({{prepare, Plan}, #test{ descriptor = Descriptor } = Test}, _From, S
     end,
     {reply, {ok, ignore}, State};
     
-
-%% handle_call({{start, #epistate{ id = ID, test_plan = Plan } = Epistate}, #test{} = Test}, From, State) ->
-%%     {noreply, State};
+handle_call({{notification, 
+              #epistate{ 
+                id = ID,
+                test_plan = Plan,
+                test = Test,
+                mods_properties = Properties
+               },
+              #epistate{
+                         id = ID0,
+                         mods_properties = Properties0
+                       }
+             }, #test{} = Test}, _From, State) ->
+    case lists:member(ID0, proplists:get_value(requirements, Properties, [])) of
+        true ->
+            case proplists:get_value(splitnode, Properties0) of
+                undefined ->
+                    ignore;
+                Splitnode ->
+                    #test{ descriptor = Descriptor0 } = Test,
+                    Funs = epitest_property_helpers:functors(Test),
+                    Fun = rewrite_funs(Funs),
+                    Descriptor = [{functor, Fun}|epitest_property_helpers:remove_functors(Descriptor0)],
+                    epitest_test_plan_server:update_epistate(Plan, ID, fun (Epistate) ->
+                                                                               Epistate#epistate{
+                                                                                 test = Test#test { descriptor = Descriptor },
+                                                                                 mods_properties = [{splitnode, Splitnode}|
+                                                                                                    Epistate#epistate.mods_properties]
+                                                                                }
+                                                                       end)
+            end;
+        _ ->
+            ignore
+    end,
+    {reply, {ok, Test}, State};
 
 handle_call({_Message, Result}, _From, State) ->
     {reply, {ok, Result}, State}.
@@ -51,7 +82,7 @@ prepare_nodesplit(Plan, #test{ id = ID }, _Properties) ->
 rewrite_funs(Fs) ->
     fun (#epistate{ test_plan = Plan, id = ID, mods_properties = Properties } = Epistate) ->
             Splitnode = proplists:get_value(splitnode, Properties),
-            {ok, Node} = epitest_slave_server:launch(Splitnode),
+            {ok, Node} = epitest_slave_server:ensure_started(Splitnode),
             epitest_test_plan_server:update_epistate(Plan, ID, fun (Epistate0) ->
                                                                        Epistate0#epistate{
                                                                          node = Node

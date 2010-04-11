@@ -6,10 +6,11 @@
 -export([start_link/0]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
--export([create/0, launch/1, eval/2]).
+-export([create/0, ensure_started/1, eval/2]).
 
 -record(state, {
           slaves,
+          nodes,
           launch_counter
          }).
 
@@ -27,28 +28,30 @@ init([]) ->
 
 handle_call(create, _From, #state{ slaves = Slaves } = State) ->
     Ref = make_ref(),
-    ets:insert(Slaves, {Ref, undefined}),
+    ets:insert(Slaves, {Ref, undefined, 0}), %% {ref(), node(), counter}
     {reply, Ref, State};
 
-handle_call({launch, Ref}, _From, #state{ slaves = Slaves, launch_counter = Counter } = State) ->
+handle_call({ensure_started, Ref}, _From, #state{ slaves = Slaves, launch_counter = Counter } = State) ->
     case ets:lookup(Slaves, Ref) of
         [] ->
             {reply, {error, nosuchnode}, State};
-        [{Ref, _}] ->
+        [{Ref, undefined, _}] ->
             {ok, Hostname} = inet:gethostname(),
             Name = list_to_atom("slave" ++ erlang:integer_to_list(Counter + 1)),
             Paths = get_paths(),
             {ok, Node} = slave:start(list_to_atom(Hostname), Name, "-hidden"),
             ok = rpc:call(Node, code, add_paths, [Paths]),
-            ets:insert(Slaves, {Ref, Node}),
-            {reply, {ok, Node}, State#state{ launch_counter = Counter + 1}}
+            ets:insert(Slaves, {Ref, Node, 1}),
+            {reply, {ok, Node}, State#state{ launch_counter = Counter + 1}};
+        [{Ref, Node, _}] when is_atom(Node) ->
+            {reply, {ok, Node}, State}
     end;
 
 handle_call({eval, Ref, Fun}, _From, #state{ slaves = Slaves } = State) ->
     case ets:lookup(Slaves, Ref) of
         [] ->
             {reply, {error, nosuchnode}, State};
-        [{Ref, Node}] ->
+        [{Ref, Node, _}] ->
             Result0 = rpc:call(Node, erlang, apply, [Fun, []]),
             Result =
             case Result0 of
@@ -79,10 +82,10 @@ code_change(_OldVsn, State, _Extra) ->
 create() ->
     gen_server:call({global, ?SERVER}, create).
 
--spec launch(any()) -> {'ok', node()} | {'error', any()}.
+-spec ensure_started(any()) -> {'ok', node()} | {'error', any()}.
                      
-launch(Ref) ->
-    gen_server:call({global, ?SERVER}, {launch, Ref}).
+ensure_started(Ref) ->
+    gen_server:call({global, ?SERVER}, {ensure_started, Ref}).
 
 -spec eval(any(), fun()) -> any().
 

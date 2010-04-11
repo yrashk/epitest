@@ -10,7 +10,7 @@ handle_call({normalize, #test{} = Test}, _From, State) ->
     Descriptor = normalize_implicit_functors(Test),
     {reply, {ok, Test#test{ descriptor = Descriptor }}, State};
 
-handle_call({{start, #epistate{ id = ID, test_plan = Plan } = Epistate}, #test{} = Test}, From, State) ->
+handle_call({{start, #epistate{ id = ID, test_plan = Plan, test = Test } = Epistate}, _Test}, From, State) ->
     spawn(fun () ->
                   Funs = epitest_property_helpers:functors(Test),
                   {Elapsed, Result} = 

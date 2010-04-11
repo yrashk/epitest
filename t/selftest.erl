@@ -131,5 +131,12 @@ test("Nodesplit should have functor started on another node") ->
              ?assertNot(Node == retr(master, State))
      end];
 
+test("Splitnode is inherited by dependant test") ->
+    [{require, [{success, ["Nodesplit should have functor started on another node"]}]},
+     fun (State) ->
+             Node = node(),
+             ?assertNot(Node == retr(master, State))
+     end];
+             
 
 ?EOT.
