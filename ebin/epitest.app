@@ -3,6 +3,7 @@
   {author, "yrashk@scallable.com"},
   {env, [{mods,
           [
+           epitest_mod_nodesplit,
            epitest_mod_require,
            epitest_mod_functor,
            epitest_mod_pending,
@@ -44,7 +45,8 @@
              epitest_test_worker_sup,
              epitest_console_logger,
              epitest_console_runner,
-             epitest_worker_notifier
+             epitest_worker_notifier,
+             epitest_slave_server
             ]},
   {applications, [kernel, stdlib]}
  ]}.

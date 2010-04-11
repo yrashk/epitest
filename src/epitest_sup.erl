@@ -19,6 +19,8 @@ init([]) ->
                    permanent, infinity, supervisor, dynamic},
     TestWorkerSup = {epitest_test_worker_sup, {epitest_test_worker_sup, start_link, []},
                     permanent, infinity, supervisor, dynamic},
-    {ok,{{one_for_one,0,1}, [TestServer, ModsSup, TestPlanSup, TestWorkerSup]}}.
+    SlaveServer = {epitest_slave_server, {epitest_slave_server, start_link, []},
+                   permanent, 5000, worker, [epitest_slave_server]},
+    {ok,{{one_for_one,0,1}, [TestServer, ModsSup, TestPlanSup, TestWorkerSup, SlaveServer]}}.
 
 
