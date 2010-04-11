@@ -59,8 +59,8 @@ handle_event({finished, _Plan}, State) ->
     io:format("Time elapsed: ~s, actual run time: ~s~n",[format_elapsed(State#state.elapsed), format_elapsed(Diff)]),
     %% Dump stacktraces
     io:format("~n\e[4m\e[31mFailures:\e[24m~n~n"),
-    lists:foldl(fun ({Reason, Stacktrace}, Index) ->
-                        io:format("\e[37m#~w) ~s ~n\e[31m~s~n", [Index, format_reason(Reason), format_stacktrace(Stacktrace)]),
+    lists:foldl(fun ({Reason, _Stacktrace}, Index) ->
+                        io:format("\e[31m#~w) ~s~n", [Index, format_reason(Reason)]),
                         Index + 1
                 end, 1, lists:reverse(State#state.failures)),
     io:format("\e[0m~n"),
