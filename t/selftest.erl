@@ -68,6 +68,10 @@ test("Simple test with a single dependency") ->
     [{require, [{success, ["Simple test with no dependencies"]}]},
      ok()];
 
+test("Simple test that depends on a test with a dependency") ->
+    [{require, [{success, ["Simple test with a single dependency"]}]},
+     ok()];
+
 test("Simple test with a single dependency references through a module") ->
     [{require, [{success, [{selftest, "Simple test with no dependencies"}]}]},
      ok()];
