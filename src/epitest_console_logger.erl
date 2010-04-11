@@ -99,6 +99,8 @@ format_loc(dynamic) ->
 
 format_reason(negative) ->
     io_lib:format("This test should have failed", []);
+format_reason({timetrapped, {X, Unit}}) ->
+    io_lib:format("timetrapped at ~w ~w",[X, Unit]);
 format_reason(Reason) ->
     io_lib:format("~p",[Reason]).
 
