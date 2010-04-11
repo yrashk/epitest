@@ -22,8 +22,8 @@ remove_functors(#test{ descriptor = Descriptor }) ->
     remove_functors(Descriptor);
 remove_functors([{functor, F}|Rest]) when is_function(F) ->
     remove_functors(Rest);
-remove_functors([_Property|Rest]) ->
-    remove_functors(Rest);
+remove_functors([Property|Rest]) ->
+    [Property|remove_functors(Rest)];
 remove_functors([]) ->
     [].
 
