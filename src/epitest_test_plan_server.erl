@@ -33,10 +33,6 @@ init(Tests) ->
 
     {ok, booted, State}.
 
-booted({load, Tests}, State) ->
-    load_tests(Tests, self(), State),
-    {next_state, booted, State};
-
 booted(run, State) ->
     initialize_workers(State),
     spawn(fun () -> start_workers(State) end),
@@ -99,9 +95,8 @@ initialize_event_mgr() ->
     EventMgr.
 
 
-load_tests(Tests, Plan, #state{ epistates = EpistatesTab }) ->
-    Epistates0 = lists:map(fun (#test{ id = ID } = Test0) ->
-                                   Test = epitest_mod:handle({plan, Plan}, Test0),
+load_tests(Tests, Plan, #state{ epistates = EpistatesTab } = State) ->
+    Epistates0 = lists:map(fun (#test{ id = ID } = Test) ->
                                    #epistate{ id = ID, test_plan = Plan, test = Test }
                            end, Tests),
     %% Filter out existing epistates (looks like ets:insert_new(Tab, Objects) is not much of a help here, but FIXME?)
@@ -114,7 +109,19 @@ load_tests(Tests, Plan, #state{ epistates = EpistatesTab }) ->
                                      end
                              end, Epistates0),
     ets:insert(EpistatesTab, Epistates),
-    [ epitest_mod:handle({prepare, Plan}, Test) || #epistate{ test = Test } <- Epistates ].
+    Preparations = lists:flatten([ epitest_mod:handle_accum({prepare, Plan}, Test) || #epistate{ test = Test } <- Epistates ]),
+    handle_preparations(Preparations, State).
+
+handle_preparations([Preparation|Preparations], State) ->
+    [handle_preparation(Preparation, State)|handle_preparations(Preparations, State)];
+handle_preparations([], _State) ->
+    [].
+
+handle_preparation({load, Tests}, State) ->
+    load_tests(Tests, self(), State);
+handle_preparation(_, _State) ->
+    ignore.
+    
     
 
 initialize_workers(#state{ event_mgr = EventMgr, epistates = Epistates }) ->
@@ -144,6 +151,8 @@ do_lookup(ID, Epistates) ->
 
 process_remaining_tests(#state { epistates = Epistates, event_mgr = EventMgr } = State) ->
     TestsToGo = length(ets:match(Epistates, #epistate{ _ = '_', id= '$1', state = started })),
+    %% ?debugVal(TestsToGo),
+    %% ?debugVal(lists:map(fun([R]) -> ets:lookup(Epistates, R) end, ets:match(Epistates, #epistate{ _ = '_', id= '$1', state = started }))),
     case TestsToGo of
         0 ->
             gen_event:notify(EventMgr, {finished, self()}),

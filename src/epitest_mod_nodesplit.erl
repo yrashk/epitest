@@ -27,7 +27,7 @@ handle_call({{prepare, Plan}, #test{ descriptor = Descriptor } = Test}, _From, S
         PropList when is_list(PropList) ->
             prepare_nodesplit(Plan, Test, PropList)
     end,
-    {reply, {ok, Test}, State};
+    {reply, {ok, ignore}, State};
     
 
 %% handle_call({{start, #epistate{ id = ID, test_plan = Plan } = Epistate}, #test{} = Test}, From, State) ->

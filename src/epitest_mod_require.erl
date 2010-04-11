@@ -10,23 +10,10 @@ handle_call({normalize, #test{} = Test}, _From, State) ->
     %% TODO: Process shortcuts
     {reply, {ok, Test}, State};
 
-handle_call({{plan, Plan}, #test{ loc = Loc } = Test}, From, State) ->
-    spawn_link(fun () ->
-                       Requirements = requirements(Test),
-                       References = references(Requirements, Loc),
-                       case References of
-                           [] ->
-                               ignore;
-                           _ ->
-                               gen_fsm:send_event(Plan, {load, References})
-                       end,
-                       gen_server:reply(From, {ok, Test})
-               end),
-    {noreply, State};
-
 handle_call({{prepare, Plan}, #test{ id = ID, loc = Loc } = Test}, From, State) ->
     spawn_link(fun () ->
                        Requirements = requirements(Test),
+                       References = references(Requirements, Loc),
                        Success = requirement_ids(success, Requirements, Loc),
                        Failure = requirement_ids(failure, Requirements, Loc),
                        Any = requirement_ids(any, Requirements, Loc),
@@ -41,7 +28,12 @@ handle_call({{prepare, Plan}, #test{ id = ID, loc = Loc } = Test}, From, State) 
                                                                                                            Epistate#epistate.mods_properties]
                                                                                    }
                                                                           end),
-                       gen_server:reply(From, {ok, Test})
+                       case References of
+                           [] ->
+                               gen_server:reply(From, {ok, ignore});
+                           _ ->
+                               gen_server:reply(From, {ok, {load, References}})
+                       end
                end),
     {noreply, State};
 

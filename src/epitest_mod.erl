@@ -1,7 +1,7 @@
 -module(epitest_mod).
 -behaviour(gen_server).
 
--export([handle/2]).
+-export([handle_chain/2, handle_accum/2]).
 
 -include_lib("epitest/include/epitest.hrl").
 
@@ -61,23 +61,42 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 %% Public functions
--spec handle(any(), #test{}) -> #test{}.
+-spec handle_chain(any(), #test{}) -> #test{}.
 
-handle(Command, InitialTest) ->
-    Mods = lists:map(fun (Mod) when is_atom(Mod) -> 
-                             Mod;
-                         ({Mod, _}) when is_atom(Mod) ->
-                             Mod
-                     end,
-                     proplists:get_value(mods, application:get_all_env(epitest), [])),
+handle_chain(Command, InitialTest) ->
     case lists:foldl(fun (_Mod, {stop, Result}) ->
                              {stop, Result};
                          (Mod, {ok, Result0}) ->
                              gen_server:call(Mod, {Command, Result0})
-                     end, {ok, InitialTest}, Mods) of
+                     end, {ok, InitialTest}, mods()) of
         {stop, Result} ->
             Result;
         {ok, Result} ->
             Result
     end.
             
+-spec handle_accum(any(), #test{}) -> list(any()).
+
+handle_accum(Command, Test) ->
+    {_, Result} = lists:foldl(fun (_Mod, {stop, Result}) ->
+                                      {stop, Result};
+                                  (Mod, {Test1, Accum}) ->
+                                      case gen_server:call(Mod, {Command, Test1}) of
+                                          {ok, Result} ->
+                                              {Test1, [Result|Accum]};
+                                          {stop, Result} -> 
+                                              {stop, [Result|Accum]}
+                                      end
+                              end, {Test, []}, mods()),
+    lists:reverse(Result).
+
+%% Internal functions
+
+mods() ->
+    lists:map(fun (Mod) when is_atom(Mod) -> 
+                      Mod;
+                  ({Mod, _}) when is_atom(Mod) ->
+                      Mod
+              end,
+              proplists:get_value(mods, application:get_all_env(epitest), [])).
+                           
