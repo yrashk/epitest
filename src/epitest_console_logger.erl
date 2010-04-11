@@ -20,7 +20,7 @@ handle_event(#epistate{ state = succeeded, test = Test, elapsed = Elapsed, node 
     #test{ loc = Loc, descriptor = Descriptor } = Test,
     case lists:member(hidden, Descriptor) of
         false ->
-            io:format("\e[32m[PASSED] \e[32m \e[37m~s\e[32m (~s) [~w/~s]\e[0m~n", [format_name(Test), format_loc(Loc), Node, format_elapsed(Elapsed)]),
+            io:format("\e[32m[PASSED] \e[32m \e[37m~s\e[32m (~s) [~w, ~s]\e[0m~n", [format_name(Test), format_loc(Loc), Node, format_elapsed(Elapsed)]),
             {ok, State#state{ passed = State#state.passed + 1, elapsed = State#state.elapsed + Elapsed} };
         true ->
             {ok, State#state{ elapsed = State#state.elapsed + Elapsed} }
@@ -28,7 +28,7 @@ handle_event(#epistate{ state = succeeded, test = Test, elapsed = Elapsed, node 
 
 handle_event(#epistate{ state = {failed, {{pending, Description}, _Stacktrace}}, elapsed = Elapsed, test = Test, node = Node }, State) ->
     #test{ loc = Loc } = Test,
-    io:format("\e[33m[PENDNG]  ~s (~s): ~p [~w/~s] \e[0m~n", [format_name(Test), format_loc(Loc), Description, Node, format_elapsed(Elapsed)]),
+    io:format("\e[33m[PENDNG]  ~s (~s): ~p [~w, ~s] \e[0m~n", [format_name(Test), format_loc(Loc), Description, Node, format_elapsed(Elapsed)]),
     {ok, State#state{ pending = State#state.pending + 1,
                       elapsed = State#state.elapsed + Elapsed
                     } };
@@ -36,12 +36,12 @@ handle_event(#epistate{ state = {failed, {{pending, Description}, _Stacktrace}},
 handle_event(#epistate{ state = {failed, {failed_requirement, Type, FRTest}}, test = Test, elapsed = Elapsed, node = Node }, State) ->
     #test{ loc = Loc } = Test,
     #test{ loc = FRLoc } = FRTest,
-    io:format("\e[36m[UNREAC]  ~s (~s): expected \"~s\" (~s) to be a ~p [~w/~s]\e[0m~n", [format_name(Test), format_loc(Loc), format_name(FRTest), format_loc(FRLoc), Type, Node, format_elapsed(Elapsed)]),
+    io:format("\e[36m[UNREAC]  ~s (~s): expected \"~s\" (~s) to be a ~p [~w, ~s]\e[0m~n", [format_name(Test), format_loc(Loc), format_name(FRTest), format_loc(FRLoc), Type, Node, format_elapsed(Elapsed)]),
     {ok, State#state{ unreachable = State#state.unreachable + 1, elapsed = State#state.elapsed + Elapsed } };
 
 handle_event(#epistate{ state = {failed, {_Reason, _Stacktrace}=Failure}, test = Test, elapsed = Elapsed, node = Node}, #state{ failures = Failures } = State) ->
     #test{ loc = Loc } = Test,
-    io:format("\e[31m[FAILED] \e[32m \e[37m~s\e[32m (~s) \e[31m[~w/~s] \e[4m(failure #~w)\e[24m\e[0m~n", [format_name(Test), format_loc(Loc), Node, format_elapsed(Elapsed), length(Failures) + 1]),
+    io:format("\e[31m[FAILED] \e[32m \e[37m~s\e[32m (~s) \e[31m[~w, ~s] \e[4m(failure #~w)\e[24m\e[0m~n", [format_name(Test), format_loc(Loc), Node, format_elapsed(Elapsed), length(Failures) + 1]),
     {ok, State#state{ failed = State#state.failed + 1,
                       failures = [Failure|Failures],
                       elapsed = State#state.elapsed + Elapsed
@@ -108,10 +108,10 @@ format_reason({badarg, {M, F, A}}) ->
 format_reason(Reason) ->
     io_lib:format("~p",[Reason]).
 
-format_stacktrace([{Module, Fun, Line}|Rest]) ->
-    [io_lib:format("     ~p.erl:~p ~p~n", [Module, Line, Fun])|format_stacktrace(Rest)];
-format_stacktrace([]) ->
-    [].
+%% format_stacktrace([{Module, Fun, Line}|Rest]) ->
+%%     [io_lib:format("     ~p.erl:~p ~p~n", [Module, Line, Fun])|format_stacktrace(Rest)];
+%% format_stacktrace([]) ->
+%%     [].
 
 format_elapsed(Elapsed) ->
     io_lib:format("~fs", [Elapsed/1000000]).
