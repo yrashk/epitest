@@ -112,4 +112,20 @@ test("Test can make itself pending with custom description") ->
              make_pending("Not Implemented")
      end];
 
+%% Nodesplits
+
+test("Capture master node") ->
+    [fun (State) ->
+             pass(master, node(), State)
+     end];
+
+test("Nodesplit should have functor started on another node") ->
+    [nodesplit,
+     {require, [{success, ["Capture master node"]}]},
+     fun (State) ->
+             Node = node(),
+             ?assertNot(Node == retr(master, State))
+     end];
+
+
 ?EOT.

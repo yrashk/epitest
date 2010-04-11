@@ -31,6 +31,7 @@
              epitest_property_helpers,
              epitest_mod,
              epitest_mods_sup,
+             epitest_mod_nodesplit,
              epitest_mod_functor,
              epitest_mod_require,
              epitest_mod_negative,

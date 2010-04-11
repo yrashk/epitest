@@ -14,7 +14,7 @@ handle_call({{start, #epistate{ id = ID, test_plan = Plan } = Epistate}, #test{}
     spawn(fun () ->
                   Funs = epitest_property_helpers:functors(Test),
                   {Elapsed, Result} = 
-                  case (catch timer:tc(epitest_property_helpers,run_functors,[Funs, Epistate])) of
+                  case normalize_result((catch timer:tc(epitest_property_helpers,run_functors,[Funs, Epistate]))) of
                       {ElapsedMs, {'EXIT', Reason}} ->
                           {ElapsedMs, {failure, Reason}};
                       {ElapsedMs, _Result} ->
@@ -44,3 +44,11 @@ normalize_implicit_functors([Property|Rest]) ->
 normalize_implicit_functors([]) ->
     [].
 
+normalize_result({Ms, []}) ->
+    {Ms, undefined};
+normalize_result({Ms, [H]}) ->
+    {Ms, H};
+normalize_result({Ms, [_|T]}) ->
+    {Ms, hd(lists:reverse(T))};
+normalize_result({Ms, Other}) ->
+    {Ms, Other}.

@@ -12,6 +12,7 @@
           state :: {'failed', any()} | 'succeeded' | 'undefined' | 'started',
           variables = [] :: list({atom(), any()}),
           elapsed = 0,
+          node = node(),
           %%
           mods_properties = []
          }).
