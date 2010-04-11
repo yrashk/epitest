@@ -15,6 +15,10 @@ handle_call({{start, #epistate{ id = ID, test_plan = Plan, test = Test } = Epist
                   Funs = epitest_property_helpers:functors(Test),
                   {Elapsed, Result} = 
                   case normalize_result((catch timer:tc(epitest_property_helpers,run_functors,[Funs, Epistate]))) of
+                      {ElapsedMs, {'EXIT', {undef, [F|Stacktrace]}}} ->
+                          {ElapsedMs, {failure, {{undef, F}, Stacktrace}}};
+                      {ElapsedMs, {'EXIT', {badarg, [F|Stacktrace]}}} ->
+                          {ElapsedMs, {failure, {{badarg, F}, Stacktrace}}};
                       {ElapsedMs, {'EXIT', Reason}} ->
                           {ElapsedMs, {failure, Reason}};
                       {ElapsedMs, _Result} ->
