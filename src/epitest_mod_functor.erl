@@ -13,16 +13,17 @@ handle_call({normalize, #test{} = Test}, _From, State) ->
 handle_call({{start, #epistate{ id = ID, test_plan = Plan } = Epistate}, #test{} = Test}, From, State) ->
     spawn(fun () ->
                   Funs = epitest_property_helpers:functors(Test),
-                  Result = 
-                  case (catch epitest_property_helpers:run_functors(Funs, Epistate)) of
-                      {'EXIT', Reason} ->
-                          {failure, Reason};
-                      _ ->
-                          success
+                  {Elapsed, Result} = 
+                  case (catch timer:tc(epitest_property_helpers,run_functors,[Funs, Epistate])) of
+                      {ElapsedMs, {'EXIT', Reason}} ->
+                          {ElapsedMs, {failure, Reason}};
+                      {ElapsedMs, _Result} ->
+                          {ElapsedMs, success}
                   end,
                   epitest_test_plan_server:update_epistate(Plan, ID, 
                                                           fun (Epistate0) ->
                                                                   Epistate0#epistate{
+                                                                    elapsed = Elapsed,
                                                                     mods_properties = [{functor_result, Result}|
                                                                                        Epistate0#epistate.mods_properties]
                                                                    }

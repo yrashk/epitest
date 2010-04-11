@@ -11,6 +11,7 @@
           worker, %% pid()
           state :: {'failed', any()} | 'succeeded' | 'undefined' | 'started',
           variables = [] :: list({atom(), any()}),
+          elapsed = 0,
           %%
           mods_properties = []
          }).

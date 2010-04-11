@@ -126,7 +126,8 @@ initialize_workers(#state{ event_mgr = EventMgr, epistates = Epistates }) ->
                           ets:insert(Epistates, Epistate#epistate{ worker = Pid })
                   end, EpistateList).
 
-start_workers(#state{ epistates = Epistates }) ->
+start_workers(#state{ event_mgr = EventMgr, epistates = Epistates }) ->
+    gen_event:notify(EventMgr, {started, self()}),
     EpistateList = ets:tab2list(Epistates),
     lists:foreach(fun (#epistate{ worker = Pid} = Epistate0) ->
                           Epistate = Epistate0#epistate{ state = started },
