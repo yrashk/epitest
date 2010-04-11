@@ -60,7 +60,7 @@ handle_event({finished, _Plan}, State) ->
     %% Dump stacktraces
     io:format("~n\e[4m\e[31mFailures:\e[24m~n~n"),
     lists:foldl(fun ({Reason, Stacktrace}, Index) ->
-                        io:format("\e[37m#~w) ~s ~n\e[31m~s~n~n", [Index, format_reason(Reason), format_stacktrace(Stacktrace)]),
+                        io:format("\e[37m#~w) ~s ~n\e[31m~s~n", [Index, format_reason(Reason), format_stacktrace(Stacktrace)]),
                         Index + 1
                 end, 1, lists:reverse(State#state.failures)),
     io:format("\e[0m~n"),
