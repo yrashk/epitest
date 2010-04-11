@@ -10,7 +10,7 @@ test("Simple test with no dependencies") ->
 
 test("Simple failing test") ->
     [fun () ->
-             fail("It should failed, that's ok")
+             fail("It should fail, that's ok")
      end];
 
 %% Parametrized tests
