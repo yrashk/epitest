@@ -100,7 +100,11 @@ format_loc(dynamic) ->
 format_reason(negative) ->
     io_lib:format("This test should have failed", []);
 format_reason({timetrapped, {X, Unit}}) ->
-    io_lib:format("timetrapped at ~w ~w",[X, Unit]);
+    io_lib:format("Timetrapped at ~w ~w",[X, Unit]);
+format_reason({undef, {M, F, A}}) ->
+    io_lib:format("Undefined function ~w:~w/~w",[M,F,length(A)]);
+format_reason({badarg, {M, F, A}}) ->
+    io_lib:format("Bad arguments ~p for ~w:~w/~w",[A,M,F,length(A)]);
 format_reason(Reason) ->
     io_lib:format("~p",[Reason]).
 
