@@ -1,17 +1,19 @@
 -module(epitest_mod_timetrap).
 
 -include_lib("epitest/include/epitest.hrl").
--export([init/0,handle_call/3]).
+-export([init/1,handle_call/3]).
 
-init() ->
-    {ok, undefined}.
+-record(state, {
+          default_timeout
+         }).
 
-handle_call({normalize, #test{ descriptor = Descriptor0 } = Test}, _From, State) ->
-    Timeout = proplists:get_value(timetrap, Descriptor0, 
-                                  proplists:get_value(timetrap_threshold, 
-                                                      application:get_all_env(epitest), 
-                                                      {30, seconds})),
+init(Properties) ->
+    {ok, #state{
+       default_timeout = proplists:get_value(default_timeout, Properties, {30, seconds})
+       }}.
 
+handle_call({normalize, #test{ descriptor = Descriptor0 } = Test}, _From, #state{ default_timeout = Timeout0 } = State) ->
+    Timeout = proplists:get_value(timetrap, Descriptor0, Timeout0),
     Descriptor = [{functor, start_timetrap(Timeout)}|Descriptor0],
     {reply, {ok, Test#test{ descriptor = Descriptor }}, State};
 

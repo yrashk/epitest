@@ -5,7 +5,7 @@
 
 -include_lib("epitest/include/epitest.hrl").
 
--export([start_link/1]).
+-export([start_link/2]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 
@@ -14,11 +14,11 @@
           state
          }).
 
-start_link(Module) ->
-    gen_server:start_link({local, Module}, ?MODULE, Module, []).
+start_link(Module, Properties) ->
+    gen_server:start_link({local, Module}, ?MODULE, [Module, Properties], []).
 
-init(Module) ->
-    case apply(Module, init, []) of
+init([Module, Properties]) ->
+    case apply(Module, init, [Properties]) of
         {ok, ModState} ->
             {ok, #state{
                module = Module,
@@ -64,7 +64,12 @@ code_change(_OldVsn, State, _Extra) ->
 -spec handle(any(), #test{}) -> #test{}.
 
 handle(Command, InitialTest) ->
-    Mods = proplists:get_value(mods, application:get_all_env(epitest), []),
+    Mods = lists:map(fun (Mod) when is_atom(Mod) -> 
+                             Mod;
+                         ({Mod, _}) when is_atom(Mod) ->
+                             Mod
+                     end,
+                     proplists:get_value(mods, application:get_all_env(epitest), [])),
     case lists:foldl(fun (_Mod, {stop, Result}) ->
                              {stop, Result};
                          (Mod, {ok, Result0}) ->

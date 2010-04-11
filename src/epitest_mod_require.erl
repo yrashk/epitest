@@ -1,9 +1,9 @@
 -module(epitest_mod_require).
 
 -include_lib("epitest/include/epitest.hrl").
--export([init/0,handle_call/3]).
+-export([init/1,handle_call/3]).
 
-init() ->
+init(_) ->
     {ok, undefined}.
 
 handle_call({normalize, #test{} = Test}, _From, State) ->
