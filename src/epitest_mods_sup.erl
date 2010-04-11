@@ -23,5 +23,7 @@ init_mods() ->
     Mods = proplists:get_value(mods, application:get_all_env(epitest), []),
     [ init_mod(Mod) || Mod <- Mods ].
 
-init_mod(Mod) ->
-    supervisor:start_child(?SERVER, [Mod]).
+init_mod({Mod, Properties}) when is_atom(Mod) ->
+    supervisor:start_child(?SERVER, [Mod, Properties]);
+init_mod(Mod) when is_atom(Mod) ->
+    init_mod({Mod, []}).

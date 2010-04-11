@@ -6,7 +6,8 @@
            epitest_mod_require,
            epitest_mod_functor,
            epitest_mod_pending,
-           epitest_mod_timetrap,
+           {epitest_mod_timetrap,
+            [{default_timeout, {30, seconds}}]},
            epitest_mod_negative,
            epitest_mod_skip,
            epitest_mod_result
@@ -17,8 +18,7 @@
            epitest_console_logger,
            epitest_console_runner
           ]}
-         ]},
-         {timetrap_threshold, 30000},
+        ]},
   {mod, {epitest_app,[]}},
   {modules, [
              epitest,
