@@ -12,6 +12,8 @@ functors(#test{ descriptor = Descriptor }) ->
     functors(Descriptor);
 functors([{functor, F}|Rest]) when is_function(F) ->
     [F|functors(Rest)];
+functors([F|Rest]) when is_function(F) ->
+    [F|functors(Rest)];
 functors([_Property|Rest]) ->
     functors(Rest);
 functors([]) ->
