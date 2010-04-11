@@ -8,7 +8,7 @@
          handle_info/2, terminate/2, code_change/3]).
 
 -record(state, { passed = 0, failed = 0, pending = 0, unreachable = 0,
-                 stacktraces = [],
+                 failures = [],
                  elapsed = 0,
                  started
                }).
@@ -39,11 +39,11 @@ handle_event(#epistate{ state = {failed, {failed_requirement, Type, FRTest}}, te
     io:format("\e[36m[UNREAC]  ~s (~s): expected \"~s\" (~s) to be a ~p [~w/~s]\e[0m~n", [format_name(Test), format_loc(Loc), format_name(FRTest), format_loc(FRLoc), Type, Node, format_elapsed(Elapsed)]),
     {ok, State#state{ unreachable = State#state.unreachable + 1, elapsed = State#state.elapsed + Elapsed } };
 
-handle_event(#epistate{ state = {failed, {Reason, Stacktrace}}, test = Test, elapsed = Elapsed, node = Node}, #state{ stacktraces = Stacktraces } = State) ->
+handle_event(#epistate{ state = {failed, {_Reason, _Stacktrace}=Failure}, test = Test, elapsed = Elapsed, node = Node}, #state{ failures = Failures } = State) ->
     #test{ loc = Loc } = Test,
-    io:format("\e[31m[FAILED] \e[32m \e[37m~s\e[32m (~s):\e[31m ~s [~w/~s] (stacktrace #~w)\e[0m~n", [format_name(Test), format_loc(Loc), format_reason(Reason), Node, format_elapsed(Elapsed), length(Stacktraces) + 1]),
+    io:format("\e[31m[FAILED] \e[32m \e[37m~s\e[32m (~s) \e[31m[~w/~s] \e[4m(failure #~w)\e[24m\e[0m~n", [format_name(Test), format_loc(Loc), Node, format_elapsed(Elapsed), length(Failures) + 1]),
     {ok, State#state{ failed = State#state.failed + 1,
-                      stacktraces = Stacktraces ++ [Stacktrace],
+                      failures = [Failure|Failures],
                       elapsed = State#state.elapsed + Elapsed
                     } };
 
@@ -58,11 +58,11 @@ handle_event({finished, _Plan}, State) ->
     %% Timing
     io:format("Time elapsed: ~s, actual run time: ~s~n",[format_elapsed(State#state.elapsed), format_elapsed(Diff)]),
     %% Dump stacktraces
-    io:format("~n\e[4m\e[31mStracktraces:\e[24m~n~n"),
-    lists:foldl(fun (Stacktrace, Index) ->
-                        io:format("\e[37m#~w)~n\e[31m~s~n~n", [Index, format_stacktrace(Stacktrace)]),
+    io:format("~n\e[4m\e[31mFailures:\e[24m~n~n"),
+    lists:foldl(fun ({Reason, Stacktrace}, Index) ->
+                        io:format("\e[37m#~w) ~s ~n\e[31m~s~n~n", [Index, format_reason(Reason), format_stacktrace(Stacktrace)]),
                         Index + 1
-                end, 1, State#state.stacktraces),
+                end, 1, lists:reverse(State#state.failures)),
     io:format("\e[0m~n"),
     {ok, State};
 
