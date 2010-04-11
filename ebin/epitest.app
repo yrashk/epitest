@@ -8,8 +8,8 @@
            epitest_mod_pending,
            epitest_mod_timetrap,
            epitest_mod_negative,
-           epitest_mod_result,
-           epitest_mod_skip
+           epitest_mod_skip,
+           epitest_mod_result
           ]},
          {test_plan_handlers,
           [
