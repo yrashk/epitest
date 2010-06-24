@@ -2,13 +2,17 @@ HOST=$(shell erl -noinput -sname console -eval "{ok, H} = inet:gethostname(), io
 
 all: test
 
-compile:
+extras/rebar_epitest/ebin/rebar_epitest.beam:
+	@cd extras/rebar_epitest && ../../rebar compile
+
+compile: extras/rebar_epitest/ebin/rebar_epitest.beam
 	@./rebar compile
 
-test: 
+test: extras/rebar_epitest/ebin/rebar_epitest.beam 
 	@./rebar epitest
 
 clean:
+	@cd extras/rebar_epitest && ../../rebar clean
 	@./rebar clean
 
 atest:
