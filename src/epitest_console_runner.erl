@@ -18,6 +18,7 @@ handle_event({finished, Plan}, State) ->
         false ->
             Pid ! {epitest_console_plan_finished, Plan};
         _ ->
+            io:format("~n~n  ====> You can attach to this node ( erl -sname console -remsh ~s )~n~n", [atom_to_list(node())]),
             ignore
     end,
     {ok, State};
