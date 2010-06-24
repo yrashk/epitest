@@ -7,7 +7,7 @@
 -export([init/1, booted/2, running/2, handle_event/3,
          handle_sync_event/4, handle_info/3, terminate/3, code_change/4]).
 
--export([lookup/2, update_epistate/3]).
+-export([lookup/2, update_epistate/3, remaining/1]).
 
 -define(SERVER(Name), {?MODULE, epitest_cluster:name(), Name}).
 
@@ -64,7 +64,12 @@ handle_event({update_epistate, ID, Fun}, StateName, #state{ epistates = Epistate
 
 handle_sync_event({lookup, ID}, _From, StateName, #state{ epistates = Epistates } = State) ->
     Reply = do_lookup(ID, Epistates),
-    {reply, Reply, StateName, State}.
+    {reply, Reply, StateName, State};
+
+handle_sync_event(remaining, _From, StateName, #state{ epistates = Epistates } = State) ->
+    States = ets:match_object(Epistates, #epistate{ _ = '_',  state = started }),
+    {reply, States, StateName, State}.
+
 
 handle_info(_Info, StateName, State) ->
     {next_state, StateName, State}.
@@ -85,7 +90,12 @@ lookup(Server, ID) ->
 
 update_epistate(Server, ID, Fun) ->
     gen_fsm:send_all_state_event(Server, {update_epistate, ID, Fun}).
-                               
+
+-spec remaining(pid()) -> list(#epistate{}).
+
+remaining(Server) ->
+    gen_fsm:sync_send_all_state_event(Server, remaining).
+                       
 
 %% Internal function
 
@@ -160,3 +170,4 @@ process_remaining_tests(#state { epistates = Epistates, event_mgr = EventMgr } =
         _ ->
             {next_state, running, State}
     end.
+
