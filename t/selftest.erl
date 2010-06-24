@@ -100,7 +100,7 @@ test("Simple test with a single dependency on a failing test") ->
     [{require, [{failure, ["Simple failing test"]}]},
      ok()];
 
-test("Simple test with a non-existent dependecy, should be unreachable") ->
+test("Simple test with a non-existent dependency, should be unreachable") ->
     [{require, [{success, ["Non-existent test, should fail"]}]},
      ok()];
 
