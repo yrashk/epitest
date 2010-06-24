@@ -17,6 +17,14 @@ start_link(Plan, Epistate) ->
 init([Plan, #epistate{ id = ID }]) ->
     {ok, booted, #state{ test_plan = Plan, id = ID }}.
 
+booted(success, #state{ id = ID, test_plan = Plan } = State) ->
+    gen_fsm:send_event(Plan, {success, ID}),
+    {next_state, succeeded, State};
+
+booted({failure, Reason}, #state{ id = ID, test_plan = Plan } = State) ->
+    gen_fsm:send_event(Plan, {failure, ID, Reason}),    
+    {next_state, failed, State};
+
 booted(start, #state{ id = ID, test_plan = Plan } = State) ->
     Epistate = epitest_test_plan_server:lookup(Plan, ID),
     epitest_mod:handle_accum({start, Epistate}, epitest_test_server:lookup(ID)),
