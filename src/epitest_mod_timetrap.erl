@@ -14,7 +14,18 @@ init(Properties) ->
 
 handle_call({normalize, #test{ descriptor = Descriptor0 } = Test}, _From, #state{ default_timeout = Timeout0 } = State) ->
     Timeout = proplists:get_value(timetrap, Descriptor0, Timeout0),
-    Descriptor = [{functor, start_timetrap(Timeout)}|Descriptor0],
+    Functor = start_timetrap(Timeout),
+    Descriptor = 
+        case lists:any(fun 
+                           ({functor, F}) ->
+                               F == Functor;
+                           (_) -> false
+                       end,Descriptor0) of
+            false ->
+                [{functor, Functor}|Descriptor0];
+            _ ->
+                Descriptor0
+        end,
     {reply, {ok, Test#test{ descriptor = Descriptor }}, State};
 
 handle_call({_Message, Result}, _From, State) ->
