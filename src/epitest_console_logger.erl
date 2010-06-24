@@ -92,10 +92,8 @@ format_name(#test{ signature = Title}) when is_list(Title) ->
 format_name(#test{ signature = {Title, Args}}) when is_list(Title), is_list(Args) ->
     io_lib:format("~s(~p)",[Title, Args]).
 
-format_loc({module, {Module, _}, Line}) ->
-    io_lib:format("~w.erl:~p",[Module, Line]);
-format_loc(dynamic) ->
-    io_lib:format("dynamic").
+format_loc(Loc) ->
+    epitest_helpers:format_loc(Loc).
 
 format_reason(negative) ->
     io_lib:format("This test should have failed", []);
