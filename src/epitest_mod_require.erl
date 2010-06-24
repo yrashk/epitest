@@ -146,9 +146,29 @@ requirements([]) ->
     [].
     
 load_references([T|L], Loc) ->
-    lists:concat([query_references(T, Loc), load_references(L, Loc)]);
+    Refs0 = query_references(T, Loc),
+    Refs =
+        case Refs0 of
+            [] ->
+                {ok, ID} = epitest_test_server:add(Loc, extract_signature(T), [fun () -> fail("Test not found") end]),
+                [epitest_test_server:lookup(ID)];
+            _ ->
+                Refs0
+        end,
+    lists:concat([Refs, load_references(L, Loc)]);
 load_references([], _Loc) ->
     [].
+
+extract_signature({'Instantiate', Ref}) ->
+    extract_signature(Ref);
+extract_signature({Module, Title}) when is_atom(Module) ->
+    Title;
+extract_signature({Module, Title, Args}) when is_atom(Module) ->
+    {Title, Args};
+extract_signature({Title, Args}) when is_list(Title) ->
+    {Title, Args};
+extract_signature(Title) ->
+    Title.
 
 -define(REFERENCE_QUERY(Match),
     epitest_test_server:q(fun (Test) ->
