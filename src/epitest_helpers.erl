@@ -43,7 +43,7 @@ instantiate(Test) ->
     {'Instantiate', Test}.
 
 instantiate_signature(S, Loc) when is_list(S) ->
-    lists:concat([S, " <- ", lists:flatten(io_lib:format("instantiated by ~p",[Loc]))]);
+    lists:concat([S, " <- ", lists:flatten(io_lib:format("instantiated from ~p",[Loc]))]);
 instantiate_signature({S, P}, Loc) when is_list(S) ->
     {instantiate_signature(S, Loc), P}.
 
