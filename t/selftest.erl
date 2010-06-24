@@ -35,22 +35,22 @@ test("Require parametrized test with full module name") ->
 
 %% Instantiation
 
-test("Instantiatable test") ->
+test("Instantiable test") ->
     [instantiable,
      fun (State) ->
-             pass(instantiated, true, State)
+             pass(instantiated, signature(State), State)
      end];
 
 test("Instantiation test #1") ->
-    [{require, [{success, [instantiate("Instantiatable test")]}]},
+    [{require, [{success, [instantiate("Instantiable test")]}]},
      fun (State) ->
-             ?assertEqual(true, retr(instantiated, State))
+             ?assertEqual(instantiate_signature("Instantiable test",loc(State)), retr(instantiated, State))
      end];
 
 test("Instantiation test #2") ->
-    [{require, [{success, [instantiate("Instantiatable test")]}]},
+    [{require, [{success, [instantiate("Instantiable test")]}]},
      fun (State) ->
-             ?assertEqual(true, retr(instantiated, State))
+             ?assertEqual(instantiate_signature("Instantiable test",loc(State)), retr(instantiated, State))
      end];
 
 %% Negative tests

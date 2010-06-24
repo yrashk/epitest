@@ -1,7 +1,7 @@
 -define(EUNIT_NOAUTO, 1).
 -include_lib("eunit/include/eunit.hrl").
 -ifndef(NO_AUTOIMPORT).
--import(epitest_helpers, [ok/0, pending/0, pending/1, make_pending/0, make_pending/1, fail/0, fail/1, pass/3, retr/2, instantiate/1]).
+-import(epitest_helpers, [ok/0, pending/0, pending/1, make_pending/0, make_pending/1, fail/0, fail/1, pass/3, retr/2, instantiate/1, loc/1, signature/1, instantiate_signature/2]).
 -endif.
 
 -record(epistate, {

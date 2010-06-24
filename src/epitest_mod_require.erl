@@ -162,7 +162,7 @@ load_references([], _Loc) ->
         
 query_references({'Instantiate', Ref}, Loc) ->
     lists:map(fun (#test{ loc = TLoc, signature = Signature, descriptor = Descriptor}) ->
-                      {ok, ID} = epitest_test_server:add(TLoc, instantiate_signature(Signature, lists:flatten(io_lib:format("instantiated by ~p",[Loc]))), filter_instantiable(Descriptor)),
+                      {ok, ID} = epitest_test_server:add(TLoc, instantiate_signature(Signature, Loc), filter_instantiable(Descriptor)),
                       epitest_test_server:lookup(ID)
               end,
               query_references(Ref, Loc));
@@ -193,11 +193,6 @@ query_references({Module, Title, Args}, {module, {_Module0, _}, _Line0}) when is
 
 query_references({Module, Title}, _Loc) when is_atom(Module) ->
     ?REFERENCE_QUERY(#test{ loc = {module, {Module, _}, _Line}, signature = Title}).
-
-instantiate_signature(S, ID) when is_list(S) ->
-    lists:concat([S, " <- ", ID]);
-instantiate_signature({S, P}, ID) when is_list(S) ->
-    {lists:concat([S, " <- ", ID]), P}.
 
 filter_instantiable([instantiable|T]) ->
     filter_instantiable(T);
