@@ -13,26 +13,25 @@ handle_call({normalize, #test{} = Test}, _From, State) ->
 handle_call({{prepare, Plan}, #test{ id = ID, loc = Loc } = Test}, From, State) ->
     spawn_link(fun () ->
                        Requirements = requirements(Test),
-                       References = references(Requirements, Loc),
-                       Success = requirement_ids(success, Requirements, Loc),
-                       Failure = requirement_ids(failure, Requirements, Loc),
-                       Any = requirement_ids(any, Requirements, Loc),
+                       Success = requirements(success, Requirements, Loc),
+                       Failure = requirements(failure, Requirements, Loc),
+                       Any = requirements(any, Requirements, Loc),
                        All = Success ++ Failure ++ Any,
                        epitest_test_plan_server:update_epistate(Plan, ID, fun (Epistate) ->
                                                                                   Epistate#epistate {
                                                                                     mods_properties = [
-                                                                                                           {requirements, All},
-                                                                                                           {require_waiting_success, Success},
-                                                                                                           {require_waiting_failure, Failure},
-                                                                                                           {require_waiting_any, Any}|
+                                                                                                           {requirements, ids(All)},
+                                                                                                           {require_waiting_success, ids(Success)},
+                                                                                                           {require_waiting_failure, ids(Failure)},
+                                                                                                           {require_waiting_any, ids(Any)}|
                                                                                                            Epistate#epistate.mods_properties]
                                                                                    }
                                                                           end),
-                       case References of
+                       case All of
                            [] ->
                                gen_server:reply(From, {ok, ignore});
                            _ ->
-                               gen_server:reply(From, {ok, {load, References}})
+                               gen_server:reply(From, {ok, {load, All}})
                        end
                end),
     {noreply, State};
@@ -145,15 +144,6 @@ requirements([_|Rest]) ->
     requirements(Rest);
 requirements([]) ->
     [].
-
-references([{success, Success}|Rest], Loc) ->
-    lists:concat([load_references(Success, Loc),references(Rest, Loc)]);
-references([{failure, Failure}|Rest], Loc) ->
-    lists:concat([load_references(Failure, Loc),references(Rest, Loc)]);
-references([{any, Any}|Rest], Loc) ->
-    lists:concat([load_references(Any, Loc),references(Rest, Loc)]);
-references([], _Loc) ->
-    [].
     
 load_references([T|L], Loc) ->
     lists:concat([query_references(T, Loc), load_references(L, Loc)]);
@@ -170,12 +160,19 @@ load_references([], _Loc) ->
                                   end
                           end)).
         
+query_references({'Instantiate', Ref}, Loc) ->
+    lists:map(fun (#test{ loc = TLoc, signature = Signature, descriptor = Descriptor}) ->
+                      {ok, ID} = epitest_test_server:add(TLoc, instantiate_signature(Signature, lists:flatten(io_lib:format("instantiated by ~p",[Loc]))), filter_instantiable(Descriptor)),
+                      epitest_test_server:lookup(ID)
+              end,
+              query_references(Ref, Loc));
+
 query_references(Title, dynamic) ->
     ?REFERENCE_QUERY(#test{ loc = dynamic, signature = Title });
 query_references({Module, Title}, dynamic) when is_atom(Module), is_list(Title) ->
     ?REFERENCE_QUERY(#test{ loc = {module, {Module, _}, _Line}, signature = Title});
 query_references({Module, Title, Args}, dynamic) when is_atom(Module), is_list(Title), is_list(Args) ->
-    ?REFERENCE_QUERY(#test{ loc = {module, {Module, _}, _Line}, signature = {Title, Args}});    
+    ?REFERENCE_QUERY(#test{ loc = {module, {Module, _}, _Line}, signature = {Title, Args}});   
 query_references(Title, {module, {Module, _}, _Line0}=Loc) when is_list(Title) ->
     query_references({Module, Title}, Loc);
 query_references({Module, Title}, {module, {_Module0, _}, _Line0}) when is_atom(Module), is_list(Title) ->
@@ -197,12 +194,33 @@ query_references({Module, Title, Args}, {module, {_Module0, _}, _Line0}) when is
 query_references({Module, Title}, _Loc) when is_atom(Module) ->
     ?REFERENCE_QUERY(#test{ loc = {module, {Module, _}, _Line}, signature = Title}).
 
-requirement_ids(Kind, [{Kind, Reqs}|Rest], Loc) ->
+instantiate_signature(S, ID) when is_list(S) ->
+    lists:concat([S, " <- ", ID]);
+instantiate_signature({S, P}, ID) when is_list(S) ->
+    {lists:concat([S, " <- ", ID]), P}.
+
+filter_instantiable([instantiable|T]) ->
+    filter_instantiable(T);
+filter_instantiable([hidden|T]) ->
+    filter_instantiable(T);
+filter_instantiable([{hidden_functor, F}|T]) ->
+    [{functor, F}|filter_instantiable(T)];
+filter_instantiable([H|T]) ->
+    [H|filter_instantiable(T)];
+filter_instantiable([]) ->
+    [].
+
+ids([H|T]) ->
+    #test{ id = ID } = H,
+    [ID|ids(T)];
+ids([]) ->
+    [].
+
+requirements(Kind, [{Kind, Reqs}|Rest], Loc) ->
     Refs = load_references(Reqs, Loc),
-    IDs = [ ID || #test{ id = ID } <- Refs ],
-    lists:concat([IDs,requirement_ids(Kind, Rest, Loc)]);
-requirement_ids(Kind, [_|Rest], Loc) ->
-    requirement_ids(Kind, Rest, Loc);
-requirement_ids(_Kind, [], _Loc) ->
+    lists:concat([Refs,requirements(Kind, Rest, Loc)]);
+requirements(Kind, [_|Rest], Loc) ->
+    requirements(Kind, Rest, Loc);
+requirements(_Kind, [], _Loc) ->
     [].
     

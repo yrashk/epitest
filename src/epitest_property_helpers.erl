@@ -2,7 +2,7 @@
 
 -include_lib("epitest/include/epitest.hrl").
 
--export([functors/1, remove_functors/1, run_functors/2]).
+-export([functors/1, remove_functors/1, hide_functors/1, run_functors/2]).
 
 %%
 %% Exports
@@ -30,6 +30,19 @@ remove_functors([Property|Rest]) ->
     [Property|remove_functors(Rest)];
 remove_functors([]) ->
     [].
+
+hide_functors(#test{ descriptor = Descriptor }) ->
+    hide_functors(Descriptor);
+hide_functors([{functor, F}|Rest]) when is_function(F) ->
+    [{hidden_functor, F}|hide_functors(Rest)];
+hide_functors([F|Rest]) when is_function(F) ->
+    [{hidden_functor, F}|hide_functors(Rest)];
+hide_functors([Property|Rest]) ->
+    [Property|hide_functors(Rest)];
+hide_functors([]) ->
+    [].
+
+
 
 run_functors([F|Fs], Epistate) when is_function(F, 0) ->
     [F()|run_functors(Fs, Epistate)];

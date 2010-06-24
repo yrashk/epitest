@@ -33,6 +33,26 @@ test("Require parametrized test with full module name") ->
     [{require, [{success, [{selftest, "Parametrized test", [arg1, arg2]}]}]},
      ok()];
 
+%% Instantiation
+
+test("Instantiatable test") ->
+    [instantiable,
+     fun (State) ->
+             pass(instantiated, true, State)
+     end];
+
+test("Instantiation test #1") ->
+    [{require, [{success, [instantiate("Instantiatable test")]}]},
+     fun (State) ->
+             ?assertEqual(true, retr(instantiated, State))
+     end];
+
+test("Instantiation test #2") ->
+    [{require, [{success, [instantiate("Instantiatable test")]}]},
+     fun (State) ->
+             ?assertEqual(true, retr(instantiated, State))
+     end];
+
 %% Negative tests
 
 test("Negative failing test should succeed") ->

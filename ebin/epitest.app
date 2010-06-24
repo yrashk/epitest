@@ -10,6 +10,7 @@
            {epitest_mod_timetrap,
             [{default_timeout, {30, seconds}}]},
            epitest_mod_negative,
+           epitest_mod_instantiable,
            epitest_mod_skip,
            epitest_mod_result
           ]},
@@ -37,6 +38,7 @@
              epitest_mod_negative,
              epitest_mod_pending,
              epitest_mod_timetrap,
+             epitest_mod_instantiable,
              epitest_mod_skip,
              epitest_mod_result,
              epitest_cluster,
