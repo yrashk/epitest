@@ -7,12 +7,19 @@
 -export([init/1, handle_event/2, handle_call/2, 
          handle_info/2, terminate/2, code_change/3]).
 
+-export([finish/0]).
+
 init([]) ->
     {ok, undefined}.
 
 handle_event({finished, Plan}, State) ->
     Pid = proplists:get_value(console_runner_master_proc, application:get_all_env(epitest), self()),
-    Pid ! {epitest_console_plan_finished, Plan},
+    case os:getenv("EPITEST_ATTACH") of
+        false ->
+            Pid ! {epitest_console_plan_finished, Plan};
+        _ ->
+            ignore
+    end,
     {ok, State};
 
 handle_event(_Event, State) ->
@@ -29,3 +36,7 @@ terminate(_Reason, _State) ->
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
+
+finish() ->
+    Pid = proplists:get_value(console_runner_master_proc, application:get_all_env(epitest)),
+    Pid ! epitest_console_plans_finished.
