@@ -1,3 +1,4 @@
 ebin/*.beam
+ebin/*.app
 extras/*/ebin/*.beam
 t/*.beam

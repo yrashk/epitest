@@ -1,0 +1,28 @@
+{application, epitest,
+ [{description, "Erlang Parallel Integration Test"},
+  {author, "yrashk@scallable.com"},
+  {env, [{mods,
+          [
+           epitest_mod_nodesplit,
+           epitest_mod_require,
+           epitest_mod_functor,
+           epitest_mod_pending,
+           {epitest_mod_timetrap,
+            [{default_timeout, {30, seconds}}]},
+           epitest_mod_negative,
+           epitest_mod_instantiable,
+           epitest_mod_skip,
+           epitest_mod_result
+          ]},
+         {test_plan_handlers,
+          [
+           epitest_worker_notifier,
+           epitest_console_logger,
+           epitest_console_runner
+          ]}
+        ]},
+  {mod, {epitest_app,[]}},
+  {modules, [
+            ]},
+  {applications, [kernel, stdlib]}
+ ]}.
