@@ -8,7 +8,7 @@ extras/rebar_epitest/ebin/rebar_epitest.beam:
 compile: extras/rebar_epitest/ebin/rebar_epitest.beam
 	@./rebar compile
 
-test: extras/rebar_epitest/ebin/rebar_epitest.beam 
+test: compile extras/rebar_epitest/ebin/rebar_epitest.beam 
 	@./rebar epitest
 
 clean:
